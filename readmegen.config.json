@@ -1,10 +1,10 @@
 {
-  "template":        "standard",
-  "output_file":     "README.md",
-  "include_tree":    true,
-  "max_tree_depth":  3,
-  "include_badges":  true,
-  "gemini_enabled":  false,
-  "author":          "",
+  "template": "standard",
+  "output_file": "README.md",
+  "include_tree": true,
+  "max_tree_depth": 3,
+  "include_badges": true,
+  "gemini_enabled": false,
+  "author": "",
   "github_username": "roshhellwett"
 }
