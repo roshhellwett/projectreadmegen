@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>projectreadmegen — Auto-generate README files</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>projectreadmegen</h1>
+            <p>Auto-generate README files from folder structure</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="input-pane">
+                <div class="panel">
+                    <h2>Project Details</h2>
+                    
+                    <div class="form-group">
+                        <label for="author">Author Name</label>
+                        <input type="text" id="author" placeholder="Your name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username">GitHub Username</label>
+                        <input type="text" id="username" placeholder="your-username">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="template">Template</label>
+                        <select id="template">
+                            <option value="minimal">Minimal</option>
+                            <option value="standard" selected>Standard</option>
+                            <option value="full">Full</option>
+                            <option value="academic">Academic</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="treeInput">Folder Tree</label>
+                        <textarea id="treeInput" placeholder="project/
+├── src/
+│   ├── main.py
+│   └── utils.py
+├── tests/
+│   └── test_main.py
+├── requirements.txt
+└── README.md"></textarea>
+                    </div>
+                    
+                    <button id="generateBtn" class="btn">Generate README</button>
+                    
+                    <div id="error" class="error-message"></div>
+                </div>
+            </div>
+            
+            <div class="preview-pane">
+                <div class="panel">
+                    <div class="preview-header">
+                        <h2>Preview</h2>
+                        <div class="preview-actions">
+                            <button id="copyBtn" class="btn btn-secondary btn-small" disabled>Copy</button>
+                            <button id="downloadBtn" class="btn btn-secondary btn-small" disabled>Download</button>
+                        </div>
+                    </div>
+                    
+                    <div id="outputInfo" class="output-info" style="display: none;">
+                        <span id="langInfo"></span>
+                        <span id="typeInfo"></span>
+                        <span id="licenseInfo"></span>
+                    </div>
+                    
+                    <div id="spinner" class="spinner"></div>
+                    <div id="preview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+# {{ project_name }}
+
+> {{ description }}
+
+{% if badge_line %}
+{{ badge_line }}
+{% endif %}
+
+## Overview
+
+## Prerequisites
+
+- {{ primary_lang }} installed on your system
+- Git
+
+## Installation
+
+```bash
+git clone https://github.com/{{ github_username }}/{{ project_raw_name }}.git
+cd {{ project_raw_name }}
+{{ install_cmd }}
+```
+
+## Usage
+
+```bash
+{{ run_cmd }}
+```
+
+{% if folder_tree %}
+
+## Project Structure
+
+```
+{{ folder_tree }}
+```
+{% endif %}
+
+{% if has_tests %}
+
+## Running Tests
+
+```bash
+pytest
+```
+{% endif %}
+
+{% if has_contributing %}
+
+## Contributing
+
+See CONTRIBUTING.md for guidelines.
+{% endif %}
+
+{% if has_license %}
+
+## License
+
+This project is licensed under the {{ license_id }} License — see the LICENSE file for details.
+{% endif %}

@@ -1,0 +1,105 @@
+<div align="center">
+
+# {{ project_name }}
+
+{{ description }}
+
+{% if badge_line %}
+{{ badge_line }}
+{% endif %}
+
+</div>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+{% if has_tests %}
+- [Testing](#testing)
+{% endif %}
+{% if has_contributing %}
+- [Contributing](#contributing)
+{% endif %}
+- [License](#license)
+
+---
+
+## Overview
+
+{{ description }}
+
+## Features
+
+- Feature one
+- Feature two
+- Feature three
+
+## Tech Stack
+
+| Technology | Purpose |
+|---|---|
+{% for lang in all_languages %}
+| {{ lang }} | Primary language |
+{% endfor %}
+
+## Installation
+
+**Prerequisites:** {{ primary_lang }}
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/{{ github_username }}/{{ project_raw_name }}.git
+
+# 2. Navigate to project folder
+cd {{ project_raw_name }}
+
+# 3. Install dependencies
+{{ install_cmd }}
+```
+
+## Usage
+
+```bash
+{{ run_cmd }}
+```
+
+{% if folder_tree %}
+
+## Project Structure
+
+```
+{{ project_raw_name }}/
+{{ folder_tree }}
+```
+{% endif %}
+
+{% if has_tests %}
+
+## Testing
+
+```bash
+pytest tests/
+```
+{% endif %}
+
+{% if has_contributing %}
+
+## Contributing
+
+Contributions are welcome! Please read CONTRIBUTING.md before submitting a pull request.
+{% endif %}
+
+## License
+
+{% if has_license %}
+This project is licensed under the {{ license_id }} License — see the LICENSE file for details.
+{% else %}
+This project currently has no license. All rights reserved.
+{% endif %}
+
+<div align="center"> Made with </div>

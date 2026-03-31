@@ -1,0 +1,38 @@
+[build-system]
+requires      = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name            = "projectreadmegen"
+version         = "1.6.5"
+description     = "Auto-generate README files from folder structure"
+readme          = "README.md"
+requires-python = ">=3.10"
+license         = { text = "MIT" }
+authors = [
+    { name = "roshhellwett", email = "roshhellwett@icloud.com" },
+]
+
+[project.urls]
+Homepage = "https://github.com/roshhellwett/projectreadmegen"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+dependencies = [
+    "typer[all]>=0.12",
+    "rich>=13",
+    "jinja2>=3.1",
+    "flask>=3.0",
+    "openai>=1.0",
+]
+
+[project.scripts]
+projectreadmegen = "projectreadmegen.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["projectreadmegen*"]
+
+[tool.setuptools.package-data]
+projectreadmegen = ["templates/*.j2", "web/templates/*", "web/static/*"]

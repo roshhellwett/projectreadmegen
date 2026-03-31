@@ -1,0 +1,57 @@
+# {{ project_name }}
+
+> {{ description }}
+
+{% if badge_line %}
+{{ badge_line }}
+{% endif %}
+
+## About the Project
+
+This project was created as part of academic coursework. It demonstrates concepts in {{ primary_lang }} programming.
+
+## Objectives
+
+- [ ] Objective 1
+- [ ] Objective 2
+- [ ] Objective 3
+
+## Installation & Setup
+
+```bash
+git clone https://github.com/{{ github_username }}/{{ project_raw_name }}.git
+cd {{ project_raw_name }}
+{{ install_cmd }}
+```
+
+## How to Run
+
+```bash
+{{ run_cmd }}
+```
+
+{% if folder_tree %}
+
+## File Structure
+
+```
+{{ folder_tree }}
+```
+{% endif %}
+
+## Concepts Demonstrated
+
+{{ primary_lang }} fundamentals
+
+## Author
+
+{{ author }}
+
+GitHub: [@{{ github_username }}](https://github.com/{{ github_username }})
+
+{% if has_license %}
+
+## License
+
+{{ license_id }}
+{% endif %}

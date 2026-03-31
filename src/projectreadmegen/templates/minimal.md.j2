@@ -1,0 +1,26 @@
+# {{ project_name }}
+
+{{ description }}
+
+{% if badge_line %}
+{{ badge_line }}
+{% endif %}
+
+## Installation
+
+```bash
+{{ install_cmd }}
+```
+
+## Usage
+
+```bash
+{{ run_cmd }}
+```
+
+{% if has_license %}
+
+## License
+
+This project is licensed under {{ license_id }}.
+{% endif %}
