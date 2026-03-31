@@ -14,6 +14,10 @@ Auto-generate README files from folder structure with optional AI enhancement us
 
 ```bash
 pip install projectreadmegen
+
+OR
+
+PyPi - (https://pypi.org/project/projectreadmegen)
 ```
 
 ## Quick Start
