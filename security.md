@@ -2,20 +2,25 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+|---------|-----------|
+| 1.6.x | :white_check_mark: |
+| < 1.6.x | :x: |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you find a security vulnerability, please report it by:
+1. Opening an issue on GitHub: https://github.com/roshhellwett/projectreadmegen/issues
+2. Or email: roshhellwett@icloud.com
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+We will respond within 48 hours.
+
+## Security Best Practices
+
+- Never commit API keys to the repository
+- Store API keys in environment variables
+- The package stores usage data in `%APPDATA%\projectreadmegen\`
+
+---
+
+© 2026 [Zenith Open Source Projects](https://zenithopensourceprojects.vercel.app/). All Rights Reserved. Zenith is a Open Source Project Idea's by @roshhellwett
