@@ -1,8 +1,14 @@
+![Repo Size](https://img.shields.io/github/repo-size/roshhellwett/projectreadmegen?style=for-the-badge)
+![Stars](https://img.shields.io/github/stars/roshhellwett/projectreadmegen?style=for-the-badge)
+![Forks](https://img.shields.io/github/forks/roshhellwett/projectreadmegen?style=for-the-badge)
+![Issues](https://img.shields.io/github/issues/roshhellwett/projectreadmegen?style=for-the-badge)
+![Markdown](https://img.shields.io/badge/Markdown-000000?style=for-the-badge&logo=markdown&logoColor=white)
+
 # PROJECT README GEN
 
 Auto-generate README files from folder structure with optional AI enhancement using Groq API.
 
-
+![SAMPLE](https://github.com/roshhellwett/projectreadmegen/blob/6ea4f99fbcdba0531e59835f7f492329fbefaab0/Sample/sample.png)
 
 ## Installation
 
