@@ -1,6 +1,8 @@
-# projectreadmegen
+# PROJECT README GEN
 
-**Auto-generate README files from folder structure with optional AI enhancement using Groq API.**
+Auto-generate README files from folder structure with optional AI enhancement using Groq API.
+
+
 
 ## Installation
 
@@ -134,4 +136,4 @@ $env:GROQ_API_KEY="your_key_here"
 
 ---
 
-**Powered by Zenith Open Source Projects | Developer - roshhellwett**
+© 2026 [Zenith Open Source Projects](https://zenithopensourceprojects.vercel.app/). All Rights Reserved. Zenith is a Open Source Project Idea's by @roshhellwett
