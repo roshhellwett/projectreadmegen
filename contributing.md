@@ -8,10 +8,10 @@ Thank you for your interest in contributing! This project welcomes contributions
 
 1. Click the "Fork" button on GitHub
 2. Clone your forked repository:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/projectreadmegen.git
-   cd projectreadmegen
-   ```
+```bash
+git clone https://github.com/YOUR_USERNAME/projectreadmegen.git
+cd projectreadmegen
+```
 
 ### Set Up Development Environment
 
@@ -78,4 +78,4 @@ git commit -m "Add your feature description"
 
 ---
 
-**Powered by Zenith Open Source Projects | Developer - roshhellwett**
+© 2026 [Zenith Open Source Projects](https://zenithopensourceprojects.vercel.app/). All Rights Reserved. Zenith is a Open Source Project Idea's by @roshhellwett
