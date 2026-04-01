@@ -7,8 +7,77 @@ document.addEventListener('DOMContentLoaded', function() {
     const errorDiv = document.getElementById('error');
     const outputInfo = document.getElementById('outputInfo');
     
+    const helpBtn = document.getElementById('helpBtn');
+    const helpBtnHeader = document.getElementById('helpBtnHeader');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelp = document.getElementById('closeHelp');
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
+    const tryDemoBtn = document.getElementById('tryDemoBtn');
+    
     let currentReadme = '';
     let projectName = 'README';
+    
+    function openHelpModal() {
+        helpModal.classList.add('active');
+        setTimeout(() => {
+            document.querySelectorAll('.tutorial-step').forEach((step, index) => {
+                setTimeout(() => {
+                    step.classList.add('visible');
+                }, index * 200);
+            });
+        }, 300);
+    }
+    
+    function closeHelpModal() {
+        helpModal.classList.remove('active');
+    }
+    
+    helpBtn.addEventListener('click', openHelpModal);
+    helpBtnHeader?.addEventListener('click', openHelpModal);
+    closeHelp.addEventListener('click', closeHelpModal);
+    closeHelpBtn.addEventListener('click', closeHelpModal);
+    
+    helpModal.addEventListener('click', function(e) {
+        if (e.target === helpModal) {
+            closeHelpModal();
+        }
+    });
+    
+    const demoTree = `my-awesome-project/
+├── src/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── utils.py
+│   └── config.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_main.py
+│   └── test_utils.py
+├── docs/
+│   ├── API.md
+│   └── README.md
+├── .gitignore
+├── requirements.txt
+├── setup.py
+└── README.md`;
+    
+    tryDemoBtn.addEventListener('click', function() {
+        closeHelpModal();
+        
+        document.getElementById('treeInput').value = demoTree;
+        document.getElementById('author').value = 'John Doe';
+        document.getElementById('username').value = 'johndoe';
+        
+        const treeInput = document.getElementById('treeInput');
+        treeInput.style.animation = 'focusRing 0.5s ease';
+        setTimeout(() => {
+            treeInput.style.animation = '';
+        }, 500);
+        
+        setTimeout(() => {
+            generateBtn.click();
+        }, 300);
+    });
     
     generateBtn.addEventListener('click', async function() {
         const tree = document.getElementById('treeInput').value;
@@ -104,5 +173,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function hideError() {
         errorDiv.style.display = 'none';
+    }
+    
+    window.copyToClipboard = async function(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard!');
+        } catch (err) {
+            showToast('Failed to copy');
+        }
+    };
+    
+    function showToast(message) {
+        let toast = document.querySelector('.toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
     }
 });

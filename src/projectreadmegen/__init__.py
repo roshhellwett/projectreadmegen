@@ -7,4 +7,4 @@ Usage:
     projectreadmegen generate <path> --template standard
 """
 
-__version__ = "1.6.5"
+__version__ = "1.6.7"

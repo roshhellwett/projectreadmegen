@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "projectreadmegen"
-version         = "1.6.5"
+version         = "1.6.7"
 description     = "Auto-generate README files from folder structure"
 readme          = "README.md"
 requires-python = ">=3.10"
@@ -35,4 +35,4 @@ where = ["src"]
 include = ["projectreadmegen*"]
 
 [tool.setuptools.package-data]
-projectreadmegen = ["templates/*.j2", "web/templates/*", "web/static/*"]
+projectreadmegen = ["templates/*.j2", "web/**/*"]

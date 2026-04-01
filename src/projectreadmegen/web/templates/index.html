@@ -7,10 +7,99 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <button id="helpBtn" class="help-float-btn" title="How to use">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9 9a3 3 0 0 1 6 0c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+    </button>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content tutorial-modal">
+            <button class="modal-close" id="closeHelp">&times;</button>
+            
+            <div class="tutorial-header">
+                <h2>How to Use projectreadmegen</h2>
+                <p>Follow these steps to generate your README</p>
+            </div>
+            
+            <div class="tutorial-steps">
+                <div class="tutorial-step" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Get Your Folder Structure</h3>
+                        <p>Run this command in your project folder to get the tree structure:</p>
+                        <div class="code-block">
+                            <code>tree /F /A</code>
+                            <button class="copy-icon" onclick="copyToClipboard('tree /F /A')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="tip-box">
+                            <span class="tip-icon">💡</span>
+                            <span>On Mac use <code>find . -print | sed 's|[^/]*/|  |g'</code> or install tree via Homebrew</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Paste the Tree Structure</h3>
+                        <p>Copy the output and paste it into the "Folder Tree" text area on the left panel.</p>
+                        <div class="visual-demo">
+                            <div class="demo-textarea">
+                                <span class="demo-label">Paste here</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Configure Options</h3>
+                        <p>Fill in optional details to customize your README:</p>
+                        <ul class="option-list">
+                            <li><span class="option-icon">👤</span> <strong>Author Name</strong> - Your name</li>
+                            <li><span class="option-icon">🐙</span> <strong>GitHub Username</strong> - For badges and links</li>
+                            <li><span class="option-icon">📄</span> <strong>Template</strong> - Choose from Minimal, Standard, Full, or Academic</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Generate & Download</h3>
+                        <p>Click "Generate README" and get your ready-to-use README!</p>
+                        <div class="action-buttons-demo">
+                            <button class="demo-btn generate">Generate README</button>
+                            <button class="demo-btn" disabled>Copy</button>
+                            <button class="demo-btn" disabled>Download</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tutorial-footer">
+                <button id="tryDemoBtn" class="btn btn-demo">Try with Demo Project</button>
+                <button id="closeHelpBtn" class="btn btn-gotit">Got it!</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1>projectreadmegen</h1>
             <p>Auto-generate README files from folder structure</p>
+            <div class="header-actions">
+                <button id="helpBtnHeader" class="btn-help-link">? How to use</button>
+            </div>
         </header>
         
         <div class="main-content">
@@ -39,7 +128,10 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="treeInput">Folder Tree</label>
+                        <label for="treeInput">
+                            <span>Folder Tree</span>
+                            <span class="hint-icon" title="Run 'tree /F /A' in your project folder to get this">?</span>
+                        </label>
                         <textarea id="treeInput" placeholder="project/
 ├── src/
 │   ├── main.py

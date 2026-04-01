@@ -61,13 +61,14 @@ def show_main_menu():
   [green]3[/green]  Manage API Key
   [green]4[/green]  View Credits Status
   [green]5[/green]  Update projectreadmegen
-  [green]6[/green]  Help & Commands
-  [green]7[/green]  Exit
+  [green]6[/green]  Start Web Server
+  [green]7[/green]  Help & Commands
+  [green]8[/green]  Exit
         """,
         title="projectreadmegen Menu",
         border_style="cyan",
     ))
-    choice = input("\nEnter your choice (1-7): ").strip()
+    choice = input("\nEnter your choice (1-8): ").strip()
     return choice
 
 
@@ -293,6 +294,120 @@ def handle_update():
     input("Press Enter to continue...")
 
 
+def handle_start_web():
+    console.print("""
+[bold cyan]Web Server Options[/bold cyan]
+
+[bold]Start web interface to generate README files visually.[/bold]
+
+[bold yellow]Options:[/bold yellow]
+  [green]1[/green]  Start Web Server (default: http://127.0.0.1:5000)
+  [green]2[/green]  Go Back
+    """)
+    
+    choice = input("\nEnter choice (1/2): ").strip()
+    
+    if choice == "1":
+        console.print("\n[bold cyan]Starting Web Server...[/bold cyan]")
+        console.print("[dim]Press Ctrl+C to stop the server[/dim]\n")
+        
+        from flask import Flask, render_template, request, jsonify
+        from projectreadmegen.scanner import scan_directory, load_config
+        from projectreadmegen.detector import detect_stack
+        from projectreadmegen.generator import generate_readme
+        from pathlib import Path
+        import threading
+        import webbrowser
+        
+        web_dir = Path(__file__).parent.parent.parent / "web"
+        flask_app = Flask(__name__, template_folder=str(web_dir / "templates"), static_folder=str(web_dir / "static"))
+
+        @flask_app.route("/")
+        def index():
+            return render_template("index.html")
+
+        @flask_app.route("/generate", methods=["POST"])
+        def generate():
+            data = request.get_json()
+            tree_txt = data.get("tree", "").strip()
+            template = data.get("template", "standard")
+            author = data.get("author", "")
+            username = data.get("github_username", "")
+            
+            if not tree_txt:
+                return jsonify({"error": "No folder tree provided."}), 400
+            
+            scan_result = _parse_tree_to_scan(tree_txt)
+            
+            config = {
+                "template": template,
+                "include_badges": True,
+                "include_tree": True,
+                "max_tree_depth": 3,
+                "output_file": "README.md",
+                "author": author,
+                "github_username": username,
+            }
+            
+            detection = detect_stack(scan_result)
+            readme = generate_readme(scan_result, detection, config)
+            
+            return jsonify({
+                "readme": readme,
+                "language": detection["primary_lang"],
+                "type": detection["project_type"],
+                "license": detection["license"],
+            })
+
+        def _parse_tree_to_scan(tree_text: str) -> dict:
+            lines = tree_text.strip().splitlines()
+            files = []
+            dirs = []
+            extensions = set()
+            
+            project_name = lines[0].strip().rstrip("/") if lines else "my-project"
+            
+            for line in lines[1:]:
+                name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
+                
+                if not name:
+                    continue
+                
+                if "." in name:
+                    files.append(name)
+                    ext = "." + name.split(".")[-1].lower()
+                    extensions.add(ext)
+                else:
+                    dirs.append(name)
+            
+            return {
+                "root": "",
+                "name": project_name,
+                "files": files,
+                "dirs": dirs,
+                "tree": "\n".join(lines[1:]),
+                "has_license": any(f in files for f in ["LICENSE", "LICENSE.md", "license"]),
+                "has_contributing": any("contributing" in f.lower() for f in files),
+                "has_gitignore": ".gitignore" in files,
+                "has_existing_readme": any(f.lower() == "readme.md" for f in files),
+                "file_extensions": sorted(list(extensions)),
+            }
+        
+        console.print(f"[green]Server running at: http://127.0.0.1:5000[/green]")
+        
+        threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
+        
+        try:
+            flask_app.run(host="127.0.0.1", port=5000, debug=False)
+        except KeyboardInterrupt:
+            console.print("\n[cyan]Web server stopped.[/cyan]")
+    elif choice == "2":
+        return
+    else:
+        console.print("\n[red]Invalid choice.[/red]")
+        input("\nPress Enter to continue...")
+
+
 def handle_generate_mode(ai=False, path="."):
     try:
         root = Path(path).resolve()
@@ -432,8 +547,10 @@ def main_menu_loop():
             elif choice == "5":
                 handle_update()
             elif choice == "6":
-                handle_help()
+                handle_start_web()
             elif choice == "7":
+                handle_help()
+            elif choice == "8":
                 console.print("\n[cyan]Thank you for using projectreadmegen![/cyan]\n")
                 break
             else:
@@ -456,9 +573,10 @@ def start():
 @app.command()
 def version():
     """Show version information."""
+    from projectreadmegen import __version__
     console = Console()
     console.print(f"""
-[bold cyan]projectreadmegen[/bold cyan] version 1.6.5
+[bold cyan]projectreadmegen[/bold cyan] version {__version__}
 
 [dim]Auto-generate README files with AI power[/dim]
 
@@ -652,5 +770,95 @@ def interactive(
     ))
 
 
+@app.command()
+def web(
+    port: int = typer.Option(5000, "--port", "-p", help="Port to run the web server"),
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind to"),
+):
+    """Start the web interface."""
+    from flask import Flask, render_template, request, jsonify
+    from projectreadmegen.scanner import scan_directory, load_config
+    from projectreadmegen.detector import detect_stack
+    from projectreadmegen.generator import generate_readme
+    from pathlib import Path
+    
+    web_dir = Path(__file__).parent.parent.parent / "web"
+    app = Flask(__name__, template_folder=str(web_dir / "templates"), static_folder=str(web_dir / "static"))
+
+    @app.route("/")
+    def index():
+        return render_template("index.html")
+
+    @app.route("/generate", methods=["POST"])
+    def generate():
+        data = request.get_json()
+        tree_txt = data.get("tree", "").strip()
+        template = data.get("template", "standard")
+        author = data.get("author", "")
+        username = data.get("github_username", "")
+        
+        if not tree_txt:
+            return jsonify({"error": "No folder tree provided."}), 400
+        
+        scan_result = _parse_tree_to_scan(tree_txt)
+        
+        config = {
+            "template": template,
+            "include_badges": True,
+            "include_tree": True,
+            "max_tree_depth": 3,
+            "output_file": "README.md",
+            "author": author,
+            "github_username": username,
+        }
+        
+        detection = detect_stack(scan_result)
+        readme = generate_readme(scan_result, detection, config)
+        
+        return jsonify({
+            "readme": readme,
+            "language": detection["primary_lang"],
+            "type": detection["project_type"],
+            "license": detection["license"],
+        })
+
+    def _parse_tree_to_scan(tree_text: str) -> dict:
+        lines = tree_text.strip().splitlines()
+        files = []
+        dirs = []
+        extensions = set()
+        
+        project_name = lines[0].strip().rstrip("/") if lines else "my-project"
+        
+        for line in lines[1:]:
+            name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
+            
+            if not name:
+                continue
+            
+            if "." in name:
+                files.append(name)
+                ext = "." + name.split(".")[-1].lower()
+                extensions.add(ext)
+            else:
+                dirs.append(name)
+        
+        return {
+            "root": "",
+            "name": project_name,
+            "files": files,
+            "dirs": dirs,
+            "tree": "\n".join(lines[1:]),
+            "has_license": any(f in files for f in ["LICENSE", "LICENSE.md", "license"]),
+            "has_contributing": any("contributing" in f.lower() for f in files),
+            "has_gitignore": ".gitignore" in files,
+            "has_existing_readme": any(f.lower() == "readme.md" for f in files),
+            "file_extensions": sorted(list(extensions)),
+        }
+
+    console.print(f"[green]Starting web interface at http://{host}:{port}[/green]")
+    app.run(host=host, port=port, debug=True)
+
+
 if __name__ == "__main__":
-    main_menu_loop()
+    app()
