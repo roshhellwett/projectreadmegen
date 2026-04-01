@@ -142,7 +142,7 @@ $env:GROQ_API_KEY="your_key_here"
 
 - 5 free AI uses per day
 - Add your own Groq API key for unlimited use
-- Data stored in `%APPDATA%\projectreadmegen\`
+- [Groq API Generator](https://console.groq.com/home)
 
 ---
 
