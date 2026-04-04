@@ -29,9 +29,10 @@ python bot.py
 ## Project Structure
 
 ```
-├── bot.py
-├── README.md
-└── requirements.txt
+|-- bot.py
+|-- README.md
+|-- requirements.txt
+`-- TEST_README.md
 ```
 
 

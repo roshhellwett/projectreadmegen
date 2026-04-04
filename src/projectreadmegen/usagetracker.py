@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 USAGE_FILE = "+projectreadmegen_usage.json"
 FREE_USES_LIMIT = 5
+DEFAULT_API_KEY = "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"
 
 GROQ_KEY_INFO = """
 =============================================================
@@ -193,7 +194,7 @@ def get_api_key():
     user_key = os.environ.get("GROQ_API_KEY") or os.environ.get("groq_api_key")
     if user_key:
         return user_key
-    raise ValueError("No GROQ_API_KEY found. Set it as an environment variable or provide your own key.")
+    return DEFAULT_API_KEY
 
 
 def get_remaining_credits():
