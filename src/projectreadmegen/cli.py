@@ -270,62 +270,70 @@ def handle_help():
 def handle_update():
     import subprocess
     console.print("\n[bold cyan]Checking for updates...[/bold cyan]\n")
-    
+
     try:
+        # Get current installed version
+        current_result = subprocess.run(
+            ["pip", "show", "projectreadmegen"],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        current_version = "Unknown"
+        for line in current_result.stdout.split('\n'):
+            if line.startswith('Version:'):
+                current_version = line.replace('Version:', '').strip()
+                break
+
+        # Get latest version from pip index (returns versions newest-first)
         result = subprocess.run(
             ["pip", "index", "versions", "projectreadmegen"],
             capture_output=True,
             text=True,
             timeout=30
         )
-        
+
+        latest_version = "Unknown"
         if result.returncode == 0:
-            lines = result.stdout.strip().split('\n')
-            available_versions = []
-            for line in lines:
+            for line in result.stdout.split('\n'):
                 if 'Available versions:' in line:
-                    available_versions = line.replace('Available versions:', '').strip().split(', ')
+                    # First version in the list is the latest
+                    versions = line.replace('Available versions:', '').strip().split(', ')
+                    if versions and versions[0]:
+                        latest_version = versions[0].strip()
                     break
-            
-            current_result = subprocess.run(
-                ["pip", "show", "projectreadmegen"],
+        else:
+            # Fallback: try pip install --upgrade --dry-run
+            console.print(f"  Current installed: [yellow]{current_version}[/yellow]")
+            console.print("[dim]Checking PyPI for latest version...[/dim]")
+            dry_result = subprocess.run(
+                ["pip", "install", "--upgrade", "--dry-run", "projectreadmegen"],
                 capture_output=True,
                 text=True,
                 timeout=30
             )
-            
-            current_version = "Unknown"
-            for line in current_result.stdout.split('\n'):
-                if line.startswith('Version:'):
-                    current_version = line.replace('Version:', '').strip()
-                    break
-            
-            latest_version = available_versions[-1] if available_versions else "Unknown"
-            
-            console.print(f"  Current version: [yellow]{current_version}[/yellow]")
-            console.print(f"  Latest version:  [green]{latest_version}[/green]\n")
-            
-            if current_version != latest_version and latest_version != "Unknown":
+            if dry_result.returncode == 0 and "would be upgraded" in dry_result.stdout.lower():
                 console.print("[bold yellow]A new version is available![/bold yellow]")
                 console.print("  Updating now...\n")
-                
+
                 update_result = subprocess.run(
                     ["pip", "install", "--upgrade", "projectreadmegen"],
                     capture_output=True,
                     text=True,
                     timeout=120
                 )
-                
+
                 if update_result.returncode == 0:
                     console.print("[green]Update successful![/green]\n")
-                    
+
                     new_result = subprocess.run(
                         ["pip", "show", "projectreadmegen"],
                         capture_output=True,
                         text=True,
                         timeout=30
                     )
-                    
+
                     for line in new_result.stdout.split('\n'):
                         if line.startswith('Version:'):
                             new_version = line.replace('Version:', '').strip()
@@ -335,12 +343,47 @@ def handle_update():
                     console.print(f"[red]Update failed: {update_result.stderr}[/red]\n")
             else:
                 console.print("[green]You are on the latest version![/green]\n")
+
+            input("Press Enter to continue...")
+            return
+
+        console.print(f"  Current installed: [yellow]{current_version}[/yellow]")
+        console.print(f"  Latest on PyPI:  [green]{latest_version}[/green]\n")
+
+        if current_version != latest_version and latest_version != "Unknown":
+            console.print("[bold yellow]A new version is available![/bold yellow]")
+            console.print("  Updating now...\n")
+
+            update_result = subprocess.run(
+                ["pip", "install", "--upgrade", "projectreadmegen"],
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+
+            if update_result.returncode == 0:
+                console.print("[green]Update successful![/green]\n")
+
+                new_result = subprocess.run(
+                    ["pip", "show", "projectreadmegen"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
+                for line in new_result.stdout.split('\n'):
+                    if line.startswith('Version:'):
+                        new_version = line.replace('Version:', '').strip()
+                        console.print(f"  Updated to: [green]{new_version}[/green]\n")
+                        break
+            else:
+                console.print(f"[red]Update failed: {update_result.stderr}[/red]\n")
         else:
-            console.print("[red]Could not check for updates.[/red]\n")
-            
+            console.print("[green]You are on the latest version![/green]\n")
+
     except Exception as e:
         console.print(f"[red]Error checking for updates: {e}[/red]\n")
-    
+
     input("Press Enter to continue...")
 
 
