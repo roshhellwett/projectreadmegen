@@ -52,7 +52,7 @@ def _load_cache() -> dict:
         try:
             with open(_CACHE_FILE, "rb") as f:
                 return pickle.load(f)
-        except:
+        except Exception:
             pass
     return {}
 
@@ -63,7 +63,7 @@ def _save_cache(cache: dict):
     try:
         with open(_CACHE_FILE, "wb") as f:
             pickle.dump(cache, f)
-    except:
+    except Exception:
         pass
 
 
