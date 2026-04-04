@@ -37,11 +37,11 @@ def _get_dir_hash(root: Path) -> str:
                     try:
                         mtime = fpath.stat().st_mtime
                         hasher.update(f"{f}:{mtime}".encode())
-                    except:
+                    except Exception:
                         pass
-    except:
+    except Exception:
         pass
-    
+
     return hasher.hexdigest()
 
 

@@ -364,22 +364,34 @@ def handle_start_web():
             files = []
             dirs = []
             extensions = set()
-            
+
+            KNOWN_FILES = {
+                "Makefile", "Dockerfile", "CMakeLists.txt", "Gemfile", "Rakefile",
+                "Podfile", "Vagrantfile", "Pipfile", "Procfile", "Containerfile",
+                "GoReleaser", "Jenkinsfile", "LICENSE", "LICENSE.md", "LICENSE.txt",
+                "README", "README.md", "CHANGELOG", "CHANGELOG.md", "CONTRIBUTING",
+                "CONTRIBUTING.md", "SECURITY", "SECURITY.md", "CODE_OF_CONDUCT",
+                "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "pyproject.toml",
+                "package.json", ".gitignore", ".eslintrc", ".babelrc", ".env.example",
+            }
+
             project_name = lines[0].strip().rstrip("/") if lines else "my-project"
-            
+
             for line in lines[1:]:
                 name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
-                
+
                 if not name:
                     continue
-                
-                if "." in name:
+
+                if name in KNOWN_FILES:
+                    files.append(name)
+                elif "." in name:
                     files.append(name)
                     ext = "." + name.split(".")[-1].lower()
                     extensions.add(ext)
                 else:
                     dirs.append(name)
-            
+
             return {
                 "root": "",
                 "name": project_name,
@@ -827,22 +839,34 @@ def web(
         files = []
         dirs = []
         extensions = set()
-        
+
+        KNOWN_FILES = {
+            "Makefile", "Dockerfile", "CMakeLists.txt", "Gemfile", "Rakefile",
+            "Podfile", "Vagrantfile", "Pipfile", "Procfile", "Containerfile",
+            "GoReleaser", "Jenkinsfile", "LICENSE", "LICENSE.md", "LICENSE.txt",
+            "README", "README.md", "CHANGELOG", "CHANGELOG.md", "CONTRIBUTING",
+            "CONTRIBUTING.md", "SECURITY", "SECURITY.md", "CODE_OF_CONDUCT",
+            "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "pyproject.toml",
+            "package.json", ".gitignore", ".eslintrc", ".babelrc", ".env.example",
+        }
+
         project_name = lines[0].strip().rstrip("/") if lines else "my-project"
-        
+
         for line in lines[1:]:
             name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
-            
+
             if not name:
                 continue
-            
-            if "." in name:
+
+            if name in KNOWN_FILES:
+                files.append(name)
+            elif "." in name:
                 files.append(name)
                 ext = "." + name.split(".")[-1].lower()
                 extensions.add(ext)
             else:
                 dirs.append(name)
-        
+
         return {
             "root": "",
             "name": project_name,
@@ -857,7 +881,7 @@ def web(
         }
 
     console.print(f"[green]Starting web interface at http://{host}:{port}[/green]")
-    app.run(host=host, port=port, debug=True)
+    flask_app.run(host=host, port=port, debug=False)
 
 
 if __name__ == "__main__":

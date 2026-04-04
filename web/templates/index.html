@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>projectreadmegen — Web Interface</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 30px;
+        }
+        header h1 { color: #38bdf8; font-size: 2rem; }
+        header p { color: #94a3b8; margin-top: 5px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .panel h2 {
+            color: #38bdf8;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 5px; }
+        textarea, input, select {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            padding: 10px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+        select { cursor: pointer; }
+        .form-group { margin-bottom: 15px; }
+        .btn {
+            background: #0ea5e9;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #0284c7; }
+        .btn:disabled { background: #475569; cursor: not-allowed; }
+        .actions { margin-top: 20px; display: flex; gap: 10px; }
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #38bdf8;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #334155;
+            border-top: 3px solid #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #output {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            max-height: 600px;
+            overflow-y: auto;
+            display: none;
+        }
+        .copy-btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover { background: #475569; }
+        .meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .meta-tag {
+            background: #334155;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            color: #38bdf8;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #475569;
+            font-size: 0.8rem;
+            border-top: 1px solid #334155;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>projectreadmegen</h1>
+            <p>Auto-generate README files with AI power</p>
+        </header>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>Configuration</h2>
+                <div class="form-group">
+                    <label for="tree">Folder Structure Tree</label>
+                    <textarea id="tree" rows="10" placeholder="Paste your folder tree here...">my-project
+|-- src
+|   |-- main.py
+|   `-- utils.py
+|-- tests
+|   `-- test_main.py
+|-- requirements.txt
+`-- README.md</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="template">Template</label>
+                    <select id="template">
+                        <option value="minimal">Minimal</option>
+                        <option value="standard" selected>Standard</option>
+                        <option value="full">Full</option>
+                        <option value="academic">Academic</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="author">Author (optional)</label>
+                    <input id="author" placeholder="Your name" />
+                </div>
+                <div class="form-group">
+                    <label for="github_username">GitHub Username (optional)</label>
+                    <input id="github_username" placeholder="your-github-username" />
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="generate()">Generate README</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Output</h2>
+                <div id="loading"><span class="spinner"></span> Generating README...</div>
+                <div id="output"></div>
+                <div class="meta" id="meta"></div>
+                <div class="actions" id="outputActions" style="display:none;">
+                    <button class="copy-btn" onclick="copyOutput()">Copy to Clipboard</button>
+                    <button class="copy-btn" onclick="downloadOutput()">Download .md</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Powered by Zenith Open Source Projects | Developer - roshhellwett
+        </footer>
+    </div>
+
+    <script>
+        let lastOutput = "";
+
+        async function generate() {
+            const tree = document.getElementById("tree").value.trim();
+            if (!tree) {
+                alert("Please provide a folder structure tree.");
+                return;
+            }
+
+            const loading = document.getElementById("loading");
+            const output = document.getElementById("output");
+            const meta = document.getElementById("meta");
+            const actions = document.getElementById("outputActions");
+            loading.style.display = "block";
+            output.style.display = "none";
+            meta.innerHTML = "";
+            actions.style.display = "none";
+
+            try {
+                const res = await fetch("/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        tree: tree,
+                        template: document.getElementById("template").value,
+                        author: document.getElementById("author").value,
+                        github_username: document.getElementById("github_username").value,
+                    }),
+                });
+
+                const data = await res.json();
+                loading.style.display = "none";
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                lastOutput = data.readme;
+                output.textContent = data.readme;
+                output.style.display = "block";
+                actions.style.display = "flex";
+
+                if (data.language) {
+                    const tags = [];
+                    if (data.language) tags.push(`Language: ${data.language}`);
+                    if (data.type) tags.push(`Type: ${data.type}`);
+                    if (data.license) tags.push(`License: ${data.license}`);
+                    meta.innerHTML = tags.map(t => `<span class="meta-tag">${t}</span>`).join("");
+                }
+            } catch (err) {
+                loading.style.display = "none";
+                alert("Error: " + err.message);
+            }
+        }
+
+        function copyOutput() {
+            navigator.clipboard.writeText(lastOutput).then(() => {
+                const btn = document.querySelector(".copy-btn");
+                btn.textContent = "Copied!";
+                setTimeout(() => { btn.textContent = "Copy to Clipboard"; }, 2000);
+            });
+        }
+
+        function downloadOutput() {
+            const blob = new Blob([lastOutput], { type: "text/markdown" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "README.md";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

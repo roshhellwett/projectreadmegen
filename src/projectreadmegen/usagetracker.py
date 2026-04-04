@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 USAGE_FILE = "+projectreadmegen_usage.json"
 FREE_USES_LIMIT = 5
-DEFAULT_API_KEY = "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"
 
 GROQ_KEY_INFO = """
 =============================================================
@@ -58,7 +57,7 @@ def load_usage_data():
         try:
             with open(path, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {"uses_today": 0, "date": "", "user_key_set": False}
     return {"uses_today": 0, "date": "", "user_key_set": False}
 
@@ -80,7 +79,7 @@ def load_project_cache(project_path):
             with open(path, 'r') as f:
                 cache = json.load(f)
                 return cache.get(cache_key, {})
-        except:
+        except Exception:
             return {}
     return {}
 
@@ -194,7 +193,7 @@ def get_api_key():
     user_key = os.environ.get("GROQ_API_KEY") or os.environ.get("groq_api_key")
     if user_key:
         return user_key
-    return DEFAULT_API_KEY
+    raise ValueError("No GROQ_API_KEY found. Set it as an environment variable or provide your own key.")
 
 
 def get_remaining_credits():
