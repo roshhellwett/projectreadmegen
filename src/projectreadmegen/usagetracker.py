@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 USAGE_FILE = "+projectreadmegen_usage.json"
 FREE_USES_LIMIT = 5
-DEFAULT_API_KEY = "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"
+DEFAULT_API_KEY = "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"
 
 GROQ_KEY_INFO = """
 =============================================================

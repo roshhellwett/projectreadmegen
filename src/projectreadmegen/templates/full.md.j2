@@ -16,11 +16,14 @@
 
 - [Overview](#overview)
 - [Features](#features)
+- [Tech Stack](#tech-stack)
 - [Installation](#installation)
 - [Usage](#usage)
+{% if folder_tree %}
 - [Project Structure](#project-structure)
+{% endif %}
 {% if has_tests %}
-- [Testing](#testing)
+- [Running Tests](#running-tests)
 {% endif %}
 {% if has_contributing %}
 - [Contributing](#contributing)
@@ -35,16 +38,49 @@
 
 ## Features
 
-- Feature one
-- Feature two
-- Feature three
+{% if project_type == "web-app" %}
+- Responsive web interface with modern UI
+- RESTful API architecture
+- Secure authentication system
+- Database-backed data management
+- Cross-browser compatibility
+{% elif project_type == "cli-tool" %}
+- Easy-to-use command-line interface
+- Configurable options and flags
+- Fast and efficient processing
+- Cross-platform support (Windows, macOS, Linux)
+- Comprehensive help and documentation
+{% elif project_type == "telegram-bot" %}
+- Interactive chat commands and responses
+- Real-time notifications and alerts
+- User authentication and role management
+- Extensible command system
+- Inline query support
+{% elif project_type == "library" %}
+- Clean and well-documented API
+- Extensible plugin architecture
+- Minimal external dependencies
+- Comprehensive type hints
+- Full unit test coverage
+{% elif project_type == "game" %}
+- Engaging gameplay mechanics
+- Intuitive controls and UI
+- Progressive difficulty scaling
+- High score tracking
+- Cross-platform support
+{% else %}
+- Clean and maintainable codebase
+- Well-documented source code
+- Extensible architecture
+- Active development and updates
+{% endif %}
 
 ## Tech Stack
 
 | Technology | Purpose |
 |---|---|
 {% for lang in all_languages %}
-| {{ lang }} | Primary language |
+| {{ lang }} | Core language |
 {% endfor %}
 
 ## Installation
@@ -80,10 +116,14 @@ cd {{ project_raw_name }}
 
 {% if has_tests %}
 
-## Testing
+## Running Tests
 
 ```bash
-pytest tests/
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=.
 ```
 {% endif %}
 

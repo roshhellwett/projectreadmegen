@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "projectreadmegen"
-version         = "1.6.10"
+version         = "1.7.0"
 description     = "Auto-generate README files from folder structure"
 readme          = "README.md"
 requires-python = ">=3.10"
@@ -12,13 +12,6 @@ license         = { text = "MIT" }
 authors = [
     { name = "roshhellwett", email = "roshhellwett@icloud.com" },
 ]
-
-[project.urls]
-Homepage = "https://github.com/roshhellwett/projectreadmegen"
-
-[project.optional-dependencies]
-dev = ["pytest"]
-
 dependencies = [
     "typer[all]>=0.12",
     "rich>=13",
@@ -26,6 +19,12 @@ dependencies = [
     "flask>=3.0",
     "openai>=1.0",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/roshhellwett/projectreadmegen"
 
 [project.scripts]
 projectreadmegen = "projectreadmegen.cli:app"

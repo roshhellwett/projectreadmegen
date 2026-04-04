@@ -25,6 +25,56 @@ logger = logging.getLogger(__name__)
 
 from projectreadmegen import __version__
 
+# Module-level KNOWN_FILES for tree parsing
+KNOWN_FILES = {
+    "Makefile", "Dockerfile", "CMakeLists.txt", "Gemfile", "Rakefile",
+    "Podfile", "Vagrantfile", "Pipfile", "Procfile", "Containerfile",
+    "GoReleaser", "Jenkinsfile", "LICENSE", "LICENSE.md", "LICENSE.txt",
+    "README", "README.md", "CHANGELOG", "CHANGELOG.md", "CONTRIBUTING",
+    "CONTRIBUTING.md", "SECURITY", "SECURITY.md", "CODE_OF_CONDUCT",
+    "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "pyproject.toml",
+    "package.json", ".gitignore", ".eslintrc", ".babelrc", ".env.example",
+}
+
+
+def parse_tree_to_scan(tree_text: str) -> dict:
+    """Parse a text-based folder tree into a scan_result dict."""
+    lines = tree_text.strip().splitlines()
+    files = []
+    dirs = []
+    extensions = set()
+
+    project_name = lines[0].strip().rstrip("/") if lines else "my-project"
+
+    for line in lines[1:]:
+        name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
+
+        if not name:
+            continue
+
+        if name in KNOWN_FILES:
+            files.append(name)
+        elif "." in name:
+            files.append(name)
+            ext = "." + name.split(".")[-1].lower()
+            extensions.add(ext)
+        else:
+            dirs.append(name)
+
+    return {
+        "root": "",
+        "name": project_name,
+        "files": files,
+        "dirs": dirs,
+        "tree": "\n".join(lines[1:]),
+        "has_license": any(f in files for f in ["LICENSE", "LICENSE.md", "license"]),
+        "has_contributing": any("contributing" in f.lower() for f in files),
+        "has_gitignore": ".gitignore" in files,
+        "has_existing_readme": any(f.lower() == "readme.md" for f in files),
+        "file_extensions": sorted(list(extensions)),
+    }
+
+
 app = typer.Typer(help="projectreadmegen — Auto-generate README files from folder structure.", add_completion=False)
 console = Console()
 
@@ -163,7 +213,7 @@ def handle_manage_api():
         else:
             console.print("[red]Invalid key format. Key should start with 'gsk_'[/red]")
         input("\nPress Enter to continue...")
-    elif choice == "3" or choice == "2":
+    elif choice == ("3" if has_key else "2"):
         return
 
 
@@ -337,7 +387,7 @@ def handle_start_web():
             if not tree_txt:
                 return jsonify({"error": "No folder tree provided."}), 400
             
-            scan_result = _parse_tree_to_scan(tree_txt)
+            scan_result = parse_tree_to_scan(tree_txt)
             
             config = {
                 "template": template,
@@ -359,52 +409,6 @@ def handle_start_web():
                 "license": detection["license"],
             })
 
-        def _parse_tree_to_scan(tree_text: str) -> dict:
-            lines = tree_text.strip().splitlines()
-            files = []
-            dirs = []
-            extensions = set()
-
-            KNOWN_FILES = {
-                "Makefile", "Dockerfile", "CMakeLists.txt", "Gemfile", "Rakefile",
-                "Podfile", "Vagrantfile", "Pipfile", "Procfile", "Containerfile",
-                "GoReleaser", "Jenkinsfile", "LICENSE", "LICENSE.md", "LICENSE.txt",
-                "README", "README.md", "CHANGELOG", "CHANGELOG.md", "CONTRIBUTING",
-                "CONTRIBUTING.md", "SECURITY", "SECURITY.md", "CODE_OF_CONDUCT",
-                "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "pyproject.toml",
-                "package.json", ".gitignore", ".eslintrc", ".babelrc", ".env.example",
-            }
-
-            project_name = lines[0].strip().rstrip("/") if lines else "my-project"
-
-            for line in lines[1:]:
-                name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
-
-                if not name:
-                    continue
-
-                if name in KNOWN_FILES:
-                    files.append(name)
-                elif "." in name:
-                    files.append(name)
-                    ext = "." + name.split(".")[-1].lower()
-                    extensions.add(ext)
-                else:
-                    dirs.append(name)
-
-            return {
-                "root": "",
-                "name": project_name,
-                "files": files,
-                "dirs": dirs,
-                "tree": "\n".join(lines[1:]),
-                "has_license": any(f in files for f in ["LICENSE", "LICENSE.md", "license"]),
-                "has_contributing": any("contributing" in f.lower() for f in files),
-                "has_gitignore": ".gitignore" in files,
-                "has_existing_readme": any(f.lower() == "readme.md" for f in files),
-                "file_extensions": sorted(list(extensions)),
-            }
-        
         console.print(f"[green]Server running at: http://127.0.0.1:5000[/green]")
         
         threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
@@ -458,7 +462,13 @@ def handle_generate_mode(ai=False, path="."):
             
             if ai:
                 progress.update(task, description="Generating README with AI...")
-                readme = grok.generate_ai_readme(scan, detection, config)
+                try:
+                    readme = grok.generate_ai_readme(scan, detection, config)
+                    console.print("[green]AI generation successful![/green]")
+                except Exception:
+                    progress.update(task, description="AI unavailable, falling back to template...")
+                    console.print("[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]")
+                    readme = generate_readme(scan, detection, config)
             else:
                 progress.update(task, description="Generating README...")
                 readme = generate_readme(scan, detection, config)
@@ -508,10 +518,13 @@ def handle_interactive_mode(ai=False, path="."):
             console.print("\n[yellow]Generating AI-powered README...[/yellow]")
             scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
             detection = detect_stack(scan)
-            readme = grok.generate_ai_readme(scan, detection, config)
+            try:
+                readme = grok.generate_ai_readme(scan, detection, config)
+            except Exception:
+                console.print("[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]")
+                readme = generate_readme(scan, detection, config)
         else:
             console.print("\n[bold cyan]Interactive Mode[/bold cyan]\n")
-            
             config["author"] = input("Your name: ").strip()
             config["github_username"] = input("Your GitHub username: ").strip()
             config["template"] = input("Template [minimal/standard/full/academic] (default: standard): ").strip() or "standard"
@@ -743,16 +756,20 @@ def interactive(
     if ai:
         usagetracker.show_key_setup()
         allowed, message = usagetracker.check_free_limit()
-        
+
         if not allowed:
             can_continue = usagetracker.handle_exhausted()
             if not can_continue:
                 raise typer.Exit(code=1)
-        
+
         console.print("[yellow]Using AI to generate README...[/yellow]")
         scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
         detection = detect_stack(scan)
-        readme = grok.generate_ai_readme(scan, detection, config)
+        try:
+            readme = grok.generate_ai_readme(scan, detection, config)
+        except Exception:
+            console.print("[yellow]AI generation unavailable. Falling back to template.[/yellow]")
+            readme = generate_readme(scan, detection, config)
     else:
         config["author"] = typer.prompt("Your name")
         config["github_username"] = typer.prompt("Your GitHub username")
@@ -795,14 +812,14 @@ def web(
     from pathlib import Path
     
     web_dir = Path(__file__).parent.parent.parent / "web"
-    app = Flask(__name__, template_folder=str(web_dir / "templates"), static_folder=str(web_dir / "static"))
+    flask_app = Flask(__name__, template_folder=str(web_dir / "templates"), static_folder=str(web_dir / "static"))
 
-    @app.route("/")
-    def index():
+    @flask_app.route("/")
+    def web_index():
         return render_template("index.html")
 
-    @app.route("/generate", methods=["POST"])
-    def generate():
+    @flask_app.route("/generate", methods=["POST"])
+    def web_generate():
         data = request.get_json()
         tree_txt = data.get("tree", "").strip()
         template = data.get("template", "standard")
@@ -812,7 +829,7 @@ def web(
         if not tree_txt:
             return jsonify({"error": "No folder tree provided."}), 400
         
-        scan_result = _parse_tree_to_scan(tree_txt)
+        scan_result = parse_tree_to_scan(tree_txt)
         
         config = {
             "template": template,
@@ -834,51 +851,8 @@ def web(
             "license": detection["license"],
         })
 
-    def _parse_tree_to_scan(tree_text: str) -> dict:
-        lines = tree_text.strip().splitlines()
-        files = []
-        dirs = []
-        extensions = set()
-
-        KNOWN_FILES = {
-            "Makefile", "Dockerfile", "CMakeLists.txt", "Gemfile", "Rakefile",
-            "Podfile", "Vagrantfile", "Pipfile", "Procfile", "Containerfile",
-            "GoReleaser", "Jenkinsfile", "LICENSE", "LICENSE.md", "LICENSE.txt",
-            "README", "README.md", "CHANGELOG", "CHANGELOG.md", "CONTRIBUTING",
-            "CONTRIBUTING.md", "SECURITY", "SECURITY.md", "CODE_OF_CONDUCT",
-            "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "pyproject.toml",
-            "package.json", ".gitignore", ".eslintrc", ".babelrc", ".env.example",
-        }
-
-        project_name = lines[0].strip().rstrip("/") if lines else "my-project"
-
-        for line in lines[1:]:
-            name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
-
-            if not name:
-                continue
-
-            if name in KNOWN_FILES:
-                files.append(name)
-            elif "." in name:
-                files.append(name)
-                ext = "." + name.split(".")[-1].lower()
-                extensions.add(ext)
-            else:
-                dirs.append(name)
-
-        return {
-            "root": "",
-            "name": project_name,
-            "files": files,
-            "dirs": dirs,
-            "tree": "\n".join(lines[1:]),
-            "has_license": any(f in files for f in ["LICENSE", "LICENSE.md", "license"]),
-            "has_contributing": any("contributing" in f.lower() for f in files),
-            "has_gitignore": ".gitignore" in files,
-            "has_existing_readme": any(f.lower() == "readme.md" for f in files),
-            "file_extensions": sorted(list(extensions)),
-        }
+    def _parse_tree_to_scan_web(tree_text: str) -> dict:
+        return _parse_tree_to_scan(tree_text)
 
     console.print(f"[green]Starting web interface at http://{host}:{port}[/green]")
     flask_app.run(host=host, port=port, debug=False)

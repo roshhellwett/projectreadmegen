@@ -8,6 +8,8 @@
 
 ## Overview
 
+{{ description }}
+
 ## Prerequisites
 
 - {{ primary_lang }} installed on your system
@@ -45,11 +47,18 @@ pytest
 ```
 {% endif %}
 
+{% if has_docs %}
+
+## Documentation
+
+Additional documentation can be found in the `docs/` directory.
+{% endif %}
+
 {% if has_contributing %}
 
 ## Contributing
 
-See CONTRIBUTING.md for guidelines.
+See CONTRIBUTING.md for guidelines on how to contribute to this project.
 {% endif %}
 
 {% if has_license %}
@@ -57,4 +66,6 @@ See CONTRIBUTING.md for guidelines.
 ## License
 
 This project is licensed under the {{ license_id }} License — see the LICENSE file for details.
+{% else %}
+This project currently has no license. All rights reserved.
 {% endif %}

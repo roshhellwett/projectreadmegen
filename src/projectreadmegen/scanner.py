@@ -139,7 +139,7 @@ def scan_directory(root_path: str, max_depth: int | None = None, use_cache: bool
         "dirs":               all_dirs,
         "tree":               tree_str,
         "has_license":        any(f in all_files for f in ["LICENSE", "LICENSE.md", "LICENSE.txt", "license"]),
-        "has_contributing":   any(f.upper() in ["CONTRIBUTING.MD", "CONTRIBUTING.TXT"] for f in all_files),
+        "has_contributing":   any(f.upper() in ["CONTRIBUTING", "CONTRIBUTING.MD", "CONTRIBUTING.TXT"] for f in all_files),
         "has_gitignore":      ".gitignore" in all_files,
         "has_existing_readme": any(f.lower() == "readme.md" for f in all_files),
         "file_extensions":    sorted(list(extensions)),
