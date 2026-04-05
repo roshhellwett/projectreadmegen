@@ -6,17 +6,21 @@
 {{ badge_line }}
 {% endif %}
 
+{% if install_cmd %}
 ## Installation
 
 ```bash
 {{ install_cmd }}
 ```
+{% endif %}
 
+{% if run_cmd %}
 ## Usage
 
 ```bash
 {{ run_cmd }}
 ```
+{% endif %}
 
 {% if has_license %}
 

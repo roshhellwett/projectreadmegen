@@ -85,7 +85,10 @@ def _detect_license(files: list, root: str) -> str:
         "MIT": ["MIT", "Permission is hereby granted, free of charge"],
         "Apache-2.0": ["Apache License", "Apache Software License"],
         "GPL-3.0": ["GNU GENERAL PUBLIC LICENSE", "GNU General Public License"],
-        "GPL-2.0": ["GNU GENERAL PUBLIC LICENSE Version 2", "GNU General Public License, version 2"],
+        "GPL-2.0": [
+            "GNU GENERAL PUBLIC LICENSE Version 2",
+            "GNU General Public License, version 2",
+        ],
         "BSD-3-Clause": ["Redistribution and use in source and binary", "BSD"],
         "BSD-2-Clause": ["BSD"],
         "MPL-2.0": ["Mozilla Public License"],
@@ -94,8 +97,10 @@ def _detect_license(files: list, root: str) -> str:
         "Unlicense": ["This is free and unencumbered software"],
     }
 
+    license_names_upper = [f.upper() for f in LICENSE_NAMES.keys()]
+
     for fname in files:
-        if fname.upper() in [f.upper() for f in LICENSE_NAMES.keys()]:
+        if fname.upper() in license_names_upper:
             try:
                 license_path = Path(root) / fname
                 with open(license_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -106,26 +111,41 @@ def _detect_license(files: list, root: str) -> str:
                 for lic_id, keywords in license_identifiers.items():
                     if any(kw.upper() in content for kw in keywords):
                         return lic_id
-
-                return "See LICENSE"
             except (IOError, OSError):
-                return "See LICENSE"
+                continue
+
+    if any(f.upper() in license_names_upper for f in files):
+        return "See LICENSE"
 
     return "None"
 
 
-def _detect_project_type(files: list, dirs: list, languages: list, extensions: list, name: str) -> str:
+def _detect_project_type(
+    files: list, dirs: list, languages: list, extensions: list, name: str
+) -> str:
     """Classify project type based on files, dirs, languages, and extensions."""
     name_lower = name.lower()
 
     # API / web framework
-    web_frameworks = {"Django", "Flask", "FastAPI", "React", "Next", "Angular", "Vue", "Express"}
+    web_frameworks = {
+        "Django",
+        "Flask",
+        "FastAPI",
+        "React",
+        "Next",
+        "Angular",
+        "Vue",
+        "Express",
+    }
     if any(f in files for f in ["app.py", "manage.py", "wsgi.py", "asgi.py"]):
         return "web-app"
     if any(f in files for f in ["package.json", "index.html", "tsconfig.json"]):
         if any(d in dirs for d in ["src", "public", "pages", "components", "app"]):
             return "web-app"
-    if any(f in files for f in ["vite.config", "next.config", "nuxt.config", "tailwind.config"]):
+    if any(
+        f in files
+        for f in ["vite.config", "next.config", "nuxt.config", "tailwind.config"]
+    ):
         return "web-app"
     if "webpack.config.js" in files or "next.config.js" in files:
         return "web-app"
@@ -136,12 +156,22 @@ def _detect_project_type(files: list, dirs: list, languages: list, extensions: l
 
     # Library
     has_init = "__init__.py" in files or "lib.rs" in files or "mod.rs" in files
-    has_no_main = not any(f in files for f in ["main.py", "main.cpp", "main.c", "main.go", "main.rs", "cli.py"])
+    has_no_main = not any(
+        f in files
+        for f in ["main.py", "main.cpp", "main.c", "main.go", "main.rs", "cli.py"]
+    )
     if has_init and has_no_main:
         return "library"
 
     # CLI
-    cli_files = {"cli.py", "main.py", "__main__.py", "pyproject.toml", "setup.py", "setup.cfg"}
+    cli_files = {
+        "cli.py",
+        "main.py",
+        "__main__.py",
+        "pyproject.toml",
+        "setup.py",
+        "setup.cfg",
+    }
     if cli_files & set(files):
         if "Python" in languages or "C++" in languages or "Rust" in languages:
             return "cli-tool"
@@ -151,7 +181,9 @@ def _detect_project_type(files: list, dirs: list, languages: list, extensions: l
         return "game"
 
     # Script
-    if any(f.endswith(".sh") or f.endswith(".ps1") or f.endswith(".bash") for f in files):
+    if any(
+        f.endswith(".sh") or f.endswith(".ps1") or f.endswith(".bash") for f in files
+    ):
         if not any(f.endswith((".py", ".js", ".ts", ".rs", ".go")) for f in files):
             return "script"
 
@@ -214,7 +246,9 @@ def _detect_install_command(files: list, primary_lang: str) -> str:
     return "# See setup instructions below"
 
 
-def _detect_run_command(files: list, dirs: list, primary_lang: str, proj_type: str) -> str:
+def _detect_run_command(
+    files: list, dirs: list, primary_lang: str, proj_type: str
+) -> str:
     """Return the most likely run command."""
     if proj_type == "cli-tool" and "main.py" in files:
         return "python main.py"

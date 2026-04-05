@@ -17,23 +17,47 @@ from projectreadmegen.config import PRESETS
 from projectreadmegen import grok
 from projectreadmegen import usagetracker
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 from projectreadmegen import __version__
 
 # Module-level KNOWN_FILES for tree parsing
 KNOWN_FILES = {
-    "Makefile", "Dockerfile", "CMakeLists.txt", "Gemfile", "Rakefile",
-    "Podfile", "Vagrantfile", "Pipfile", "Procfile", "Containerfile",
-    "GoReleaser", "Jenkinsfile", "LICENSE", "LICENSE.md", "LICENSE.txt",
-    "README", "README.md", "CHANGELOG", "CHANGELOG.md", "CONTRIBUTING",
-    "CONTRIBUTING.md", "SECURITY", "SECURITY.md", "CODE_OF_CONDUCT",
-    "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "pyproject.toml",
-    "package.json", ".gitignore", ".eslintrc", ".babelrc", ".env.example",
+    "Makefile",
+    "Dockerfile",
+    "CMakeLists.txt",
+    "Gemfile",
+    "Rakefile",
+    "Podfile",
+    "Vagrantfile",
+    "Pipfile",
+    "Procfile",
+    "Containerfile",
+    "GoReleaser",
+    "Jenkinsfile",
+    "LICENSE",
+    "LICENSE.md",
+    "LICENSE.txt",
+    "README",
+    "README.md",
+    "CHANGELOG",
+    "CHANGELOG.md",
+    "CONTRIBUTING",
+    "CONTRIBUTING.md",
+    "SECURITY",
+    "SECURITY.md",
+    "CODE_OF_CONDUCT",
+    "go.mod",
+    "go.sum",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pyproject.toml",
+    "package.json",
+    ".gitignore",
+    ".eslintrc",
+    ".babelrc",
+    ".env.example",
 }
 
 
@@ -47,7 +71,13 @@ def parse_tree_to_scan(tree_text: str) -> dict:
     project_name = lines[0].strip().rstrip("/") if lines else "my-project"
 
     for line in lines[1:]:
-        name = line.replace("|--", "").replace("`--", "").replace("|", "").replace(" ", "").strip()
+        name = (
+            line.replace("|--", "")
+            .replace("`--", "")
+            .replace("|", "")
+            .replace(" ", "")
+            .strip()
+        )
 
         if not name:
             continue
@@ -75,8 +105,12 @@ def parse_tree_to_scan(tree_text: str) -> dict:
     }
 
 
-app = typer.Typer(help="projectreadmegen — Auto-generate README files from folder structure.", add_completion=False)
+app = typer.Typer(
+    help="projectreadmegen — Auto-generate README files from folder structure.",
+    add_completion=False,
+)
 console = Console()
+
 
 def print_version():
     console.print(f"""
@@ -91,7 +125,9 @@ def print_version():
 
 @app.callback()
 def main(
-    version: bool = typer.Option(False, "--version", "-V", help="Show version and exit"),
+    version: bool = typer.Option(
+        False, "--version", "-V", help="Show version and exit"
+    ),
 ):
     if version:
         print_version()
@@ -99,8 +135,9 @@ def main(
 
 def show_main_menu():
     console.clear()
-    console.print(Panel(
-        """
+    console.print(
+        Panel(
+            """
 [bold cyan]Welcome to projectreadmegen[/bold cyan]
 [dim]Auto-generate README files with AI power[/dim]
 
@@ -115,9 +152,10 @@ def show_main_menu():
   [green]7[/green]  Help & Commands
   [green]8[/green]  Exit
         """,
-        title="projectreadmegen Menu",
-        border_style="cyan",
-    ))
+            title="projectreadmegen Menu",
+            border_style="cyan",
+        )
+    )
     choice = input("\nEnter your choice (1-8): ").strip()
     return choice
 
@@ -126,11 +164,11 @@ def handle_create_ai():
     console.print("\n[bold]Select mode:[/bold]")
     console.print("  [green]1[/green]  Generate (quick mode)")
     console.print("  [green]2[/green]  Interactive (answer questions)")
-    
+
     mode = input("\nEnter mode (1/2): ").strip()
-    
+
     path = input("\nEnter project path (default: .): ").strip() or "."
-    
+
     if mode == "2":
         handle_interactive_mode(ai=True, path=path)
     else:
@@ -141,11 +179,11 @@ def handle_create_normal():
     console.print("\n[bold]Select mode:[/bold]")
     console.print("  [green]1[/green]  Generate (quick mode)")
     console.print("  [green]2[/green]  Interactive (answer questions)")
-    
+
     mode = input("\nEnter mode (1/2): ").strip()
-    
+
     path = input("\nEnter project path (default: .): ").strip() or "."
-    
+
     if mode == "2":
         handle_interactive_mode(ai=False, path=path)
     else:
@@ -155,7 +193,7 @@ def handle_create_normal():
 def handle_manage_api():
     user_key = os.environ.get("GROQ_API_KEY")
     has_key = bool(user_key)
-    
+
     if has_key:
         console.print(f"""
 [bold yellow]Current Status:[/bold yellow]
@@ -175,9 +213,9 @@ def handle_manage_api():
   [green]1[/green]  Add Your Own API Key
   [green]2[/green]  Go Back
         """)
-    
+
     choice = input("\nEnter choice: ").strip()
-    
+
     if has_key and choice == "1":
         key = input("\nEnter your new Groq API key: ").strip()
         if key and key.startswith("gsk_"):
@@ -220,14 +258,14 @@ def handle_manage_api():
 def handle_credits_status():
     msg = usagetracker.get_remaining_credits()
     data = usagetracker.load_usage_data()
-    
+
     user_key = os.environ.get("GROQ_API_KEY")
     has_key = bool(user_key) or data.get("user_key_set")
-    
+
     console.print(f"""
 [bold yellow]Credits Status:[/bold yellow]
 
-  API Key: {'[green]Configured[/green]' if has_key else '[red]Not configured[/red]'}
+  API Key: {"[green]Configured[/green]" if has_key else "[red]Not configured[/red]"}
   {msg}
 
 [bold]Details:[/bold]
@@ -269,6 +307,7 @@ def handle_help():
 
 def handle_update():
     import subprocess
+
     console.print("\n[bold cyan]Checking for updates...[/bold cyan]\n")
 
     try:
@@ -277,13 +316,13 @@ def handle_update():
             ["pip", "show", "projectreadmegen"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         current_version = "Unknown"
-        for line in current_result.stdout.split('\n'):
-            if line.startswith('Version:'):
-                current_version = line.replace('Version:', '').strip()
+        for line in current_result.stdout.split("\n"):
+            if line.startswith("Version:"):
+                current_version = line.replace("Version:", "").strip()
                 break
 
         # Get latest version from pip index (returns versions newest-first)
@@ -291,15 +330,17 @@ def handle_update():
             ["pip", "index", "versions", "projectreadmegen"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         latest_version = "Unknown"
         if result.returncode == 0:
-            for line in result.stdout.split('\n'):
-                if 'Available versions:' in line:
+            for line in result.stdout.split("\n"):
+                if "Available versions:" in line:
                     # First version in the list is the latest
-                    versions = line.replace('Available versions:', '').strip().split(', ')
+                    versions = (
+                        line.replace("Available versions:", "").strip().split(", ")
+                    )
                     if versions and versions[0]:
                         latest_version = versions[0].strip()
                     break
@@ -311,9 +352,12 @@ def handle_update():
                 ["pip", "install", "--upgrade", "--dry-run", "projectreadmegen"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
-            if dry_result.returncode == 0 and "would be upgraded" in dry_result.stdout.lower():
+            if (
+                dry_result.returncode == 0
+                and "would be upgraded" in dry_result.stdout.lower()
+            ):
                 console.print("[bold yellow]A new version is available![/bold yellow]")
                 console.print("  Updating now...\n")
 
@@ -321,7 +365,7 @@ def handle_update():
                     ["pip", "install", "--upgrade", "projectreadmegen"],
                     capture_output=True,
                     text=True,
-                    timeout=120
+                    timeout=120,
                 )
 
                 if update_result.returncode == 0:
@@ -331,13 +375,15 @@ def handle_update():
                         ["pip", "show", "projectreadmegen"],
                         capture_output=True,
                         text=True,
-                        timeout=30
+                        timeout=30,
                     )
 
-                    for line in new_result.stdout.split('\n'):
-                        if line.startswith('Version:'):
-                            new_version = line.replace('Version:', '').strip()
-                            console.print(f"  Updated to: [green]{new_version}[/green]\n")
+                    for line in new_result.stdout.split("\n"):
+                        if line.startswith("Version:"):
+                            new_version = line.replace("Version:", "").strip()
+                            console.print(
+                                f"  Updated to: [green]{new_version}[/green]\n"
+                            )
                             break
                 else:
                     console.print(f"[red]Update failed: {update_result.stderr}[/red]\n")
@@ -358,7 +404,7 @@ def handle_update():
                 ["pip", "install", "--upgrade", "projectreadmegen"],
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
 
             if update_result.returncode == 0:
@@ -368,12 +414,12 @@ def handle_update():
                     ["pip", "show", "projectreadmegen"],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
 
-                for line in new_result.stdout.split('\n'):
-                    if line.startswith('Version:'):
-                        new_version = line.replace('Version:', '').strip()
+                for line in new_result.stdout.split("\n"):
+                    if line.startswith("Version:"):
+                        new_version = line.replace("Version:", "").strip()
                         console.print(f"  Updated to: [green]{new_version}[/green]\n")
                         break
             else:
@@ -397,13 +443,13 @@ def handle_start_web():
   [green]1[/green]  Start Web Server (default: http://127.0.0.1:5000)
   [green]2[/green]  Go Back
     """)
-    
+
     choice = input("\nEnter choice (1/2): ").strip()
-    
+
     if choice == "1":
         console.print("\n[bold cyan]Starting Web Server...[/bold cyan]")
         console.print("[dim]Press Ctrl+C to stop the server[/dim]\n")
-        
+
         from flask import Flask, render_template, request, jsonify
         from projectreadmegen.scanner import scan_directory, load_config
         from projectreadmegen.detector import detect_stack
@@ -411,9 +457,13 @@ def handle_start_web():
         from pathlib import Path
         import threading
         import webbrowser
-        
+
         web_dir = Path(__file__).parent.parent.parent / "web"
-        flask_app = Flask(__name__, template_folder=str(web_dir / "templates"), static_folder=str(web_dir / "static"))
+        flask_app = Flask(
+            __name__,
+            template_folder=str(web_dir / "templates"),
+            static_folder=str(web_dir / "static"),
+        )
 
         @flask_app.route("/")
         def index():
@@ -426,12 +476,12 @@ def handle_start_web():
             template = data.get("template", "standard")
             author = data.get("author", "")
             username = data.get("github_username", "")
-            
+
             if not tree_txt:
                 return jsonify({"error": "No folder tree provided."}), 400
-            
+
             scan_result = parse_tree_to_scan(tree_txt)
-            
+
             config = {
                 "template": template,
                 "include_badges": True,
@@ -441,21 +491,23 @@ def handle_start_web():
                 "author": author,
                 "github_username": username,
             }
-            
+
             detection = detect_stack(scan_result)
             readme = generate_readme(scan_result, detection, config)
-            
-            return jsonify({
-                "readme": readme,
-                "language": detection["primary_lang"],
-                "type": detection["project_type"],
-                "license": detection["license"],
-            })
+
+            return jsonify(
+                {
+                    "readme": readme,
+                    "language": detection["primary_lang"],
+                    "type": detection["project_type"],
+                    "license": detection["license"],
+                }
+            )
 
         console.print(f"[green]Server running at: http://127.0.0.1:5000[/green]")
-        
+
         threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
-        
+
         try:
             flask_app.run(host="127.0.0.1", port=5000, debug=False)
         except KeyboardInterrupt:
@@ -474,23 +526,23 @@ def handle_generate_mode(ai=False, path="."):
             console.print(f"[red]Error: Path '{path}' does not exist.[/red]")
             input("\nPress Enter to continue...")
             return
-        
+
         if not root.is_dir():
             console.print(f"[red]Error: '{path}' is not a directory.[/red]")
             input("\nPress Enter to continue...")
             return
-        
+
         config = load_config(str(root))
-        
+
         if ai:
             usagetracker.show_key_setup()
             allowed, message = usagetracker.check_free_limit()
-            
+
             if not allowed:
                 can_continue = usagetracker.handle_exhausted()
                 if not can_continue:
                     return
-        
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -499,43 +551,49 @@ def handle_generate_mode(ai=False, path="."):
         ) as progress:
             task = progress.add_task("Scanning project...", total=None)
             scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-            
+
             progress.update(task, description="Detecting stack...")
             detection = detect_stack(scan)
-            
+
             if ai:
                 progress.update(task, description="Generating README with AI...")
                 try:
                     readme = grok.generate_ai_readme(scan, detection, config)
                     console.print("[green]AI generation successful![/green]")
                 except Exception:
-                    progress.update(task, description="AI unavailable, falling back to template...")
-                    console.print("[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]")
+                    progress.update(
+                        task, description="AI unavailable, falling back to template..."
+                    )
+                    console.print(
+                        "[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]"
+                    )
                     readme = generate_readme(scan, detection, config)
             else:
                 progress.update(task, description="Generating README...")
                 readme = generate_readme(scan, detection, config)
-        
+
         output_path = root / config["output_file"]
         save_readme(readme, str(output_path))
-        
+
         credits_msg = usagetracker.get_remaining_credits()
-        
-        console.print(Panel(
-            f"[green]README generated![/green]\n\n"
-            f"  Project  : [bold]{scan['name']}[/bold]\n"
-            f"  Language : [bold]{detection['primary_lang']}[/bold]\n"
-            f"  Type     : [bold]{detection['project_type']}[/bold]\n"
-            f"  Mode     : [bold]{'AI' if ai else 'Template'}[/bold]\n"
-            f"  Saved to : [bold]{output_path}[/bold]\n\n"
-            f"{credits_msg}",
-            title="projectreadmegen",
-            border_style="green",
-        ))
-        
+
+        console.print(
+            Panel(
+                f"[green]README generated![/green]\n\n"
+                f"  Project  : [bold]{scan['name']}[/bold]\n"
+                f"  Language : [bold]{detection['primary_lang']}[/bold]\n"
+                f"  Type     : [bold]{detection['project_type']}[/bold]\n"
+                f"  Mode     : [bold]{'AI' if ai else 'Template'}[/bold]\n"
+                f"  Saved to : [bold]{output_path}[/bold]\n\n"
+                f"{credits_msg}",
+                title="projectreadmegen",
+                border_style="green",
+            )
+        )
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-    
+
     input("\nPress Enter to continue...")
 
 
@@ -546,56 +604,65 @@ def handle_interactive_mode(ai=False, path="."):
             console.print(f"[red]Error: Path '{path}' does not exist.[/red]")
             input("\nPress Enter to continue...")
             return
-        
+
         config = load_config(str(root))
-        
+
         if ai:
             usagetracker.show_key_setup()
             allowed, message = usagetracker.check_free_limit()
-            
+
             if not allowed:
                 can_continue = usagetracker.handle_exhausted()
                 if not can_continue:
                     return
-            
+
             console.print("\n[yellow]Generating AI-powered README...[/yellow]")
             scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
             detection = detect_stack(scan)
             try:
                 readme = grok.generate_ai_readme(scan, detection, config)
             except Exception:
-                console.print("[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]")
+                console.print(
+                    "[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]"
+                )
                 readme = generate_readme(scan, detection, config)
         else:
             console.print("\n[bold cyan]Interactive Mode[/bold cyan]\n")
             config["author"] = input("Your name: ").strip()
             config["github_username"] = input("Your GitHub username: ").strip()
-            config["template"] = input("Template [minimal/standard/full/academic] (default: standard): ").strip() or "standard"
+            config["template"] = (
+                input(
+                    "Template [minimal/standard/full/academic] (default: standard): "
+                ).strip()
+                or "standard"
+            )
             include_tree = input("Include folder tree? [Y/n]: ").strip().lower()
             config["include_tree"] = include_tree != "n"
-            
+
             scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
             detection = detect_stack(scan)
             readme = generate_readme(scan, detection, config)
-        
+
         output_path = root / config["output_file"]
         save_readme(readme, str(output_path))
-        
+
         credits_msg = usagetracker.get_remaining_credits()
-        
-        console.print(Panel(
-            f"[green]README generated![/green]\n\n"
-            f"  Project  : [bold]{scan['name']}[/bold]\n"
-            f"  Mode     : [bold]Interactive {'(AI)' if ai else '(Template)'}[/bold]\n"
-            f"  Saved to : [bold]{output_path}[/bold]\n\n"
-            f"{credits_msg}",
-            title="projectreadmegen",
-            border_style="green",
-        ))
-        
+
+        console.print(
+            Panel(
+                f"[green]README generated![/green]\n\n"
+                f"  Project  : [bold]{scan['name']}[/bold]\n"
+                f"  Mode     : [bold]Interactive {'(AI)' if ai else '(Template)'}[/bold]\n"
+                f"  Saved to : [bold]{output_path}[/bold]\n\n"
+                f"{credits_msg}",
+                title="projectreadmegen",
+                border_style="green",
+            )
+        )
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-    
+
     input("\nPress Enter to continue...")
 
 
@@ -603,7 +670,7 @@ def main_menu_loop():
     while True:
         try:
             choice = show_main_menu()
-            
+
             if choice == "1":
                 handle_create_ai()
             elif choice == "2":
@@ -625,7 +692,9 @@ def main_menu_loop():
                 console.print("\n[red]Invalid choice. Please try again.[/red]")
                 input("\nPress Enter to continue...")
         except KeyboardInterrupt:
-            console.print("\n\n[cyan]Goodbye! Thank you for using projectreadmegen![/cyan]\n")
+            console.print(
+                "\n\n[cyan]Goodbye! Thank you for using projectreadmegen![/cyan]\n"
+            )
             break
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
@@ -642,6 +711,7 @@ def start():
 def version():
     """Show version information."""
     from projectreadmegen import __version__
+
     console = Console()
     console.print(f"""
 [bold cyan]projectreadmegen[/bold cyan] version {__version__}
@@ -661,72 +731,89 @@ def update():
 @app.command()
 def generate(
     path: str = typer.Argument(".", help="Path to the project directory"),
-    template: str | None = typer.Option(None, "--template", "-t",
-        help="Template to use: minimal | standard | full | academic"),
-    output: str = typer.Option("README.md", "--output", "-o",
-        help="Output filename (default: README.md)"),
-    no_badges: bool = typer.Option(False, "--no-badges",
-        help="Disable badge generation"),
-    depth: int = typer.Option(3, "--depth", "-d",
-        help="Max folder tree depth (default: 3)"),
-    dry_run: bool = typer.Option(False, "--dry-run",
-        help="Print README to terminal without saving to file"),
-    force: bool = typer.Option(False, "--force", "-f",
-        help="Overwrite existing README.md without confirmation"),
-    ai: bool = typer.Option(False, "--ai", "-a", "--grok",
-        help="Use Grok AI to generate enhanced README"),
-    auto_ai: bool = typer.Option(False, "--auto-ai",
-        help="Auto-detect and use AI when API key is available"),
+    template: str | None = typer.Option(
+        None,
+        "--template",
+        "-t",
+        help="Template to use: minimal | standard | full | academic",
+    ),
+    output: str = typer.Option(
+        "README.md", "--output", "-o", help="Output filename (default: README.md)"
+    ),
+    no_badges: bool = typer.Option(
+        False, "--no-badges", help="Disable badge generation"
+    ),
+    depth: int = typer.Option(
+        3, "--depth", "-d", help="Max folder tree depth (default: 3)"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Print README to terminal without saving to file"
+    ),
+    force: bool = typer.Option(
+        False, "--force", "-f", help="Overwrite existing README.md without confirmation"
+    ),
+    ai: bool = typer.Option(
+        False, "--ai", "-a", "--grok", help="Use Grok AI to generate enhanced README"
+    ),
+    auto_ai: bool = typer.Option(
+        False, "--auto-ai", help="Auto-detect and use AI when API key is available"
+    ),
 ):
     console = Console()
     root = Path(path).resolve()
-    
+
     if not root.exists():
         console.print(f"[red]Error: Path '{path}' does not exist.[/red]")
         raise typer.Exit(code=1)
-    
+
     if not root.is_dir():
         console.print(f"[red]Error:[/red] '{path}' is not a directory.")
         raise typer.Exit(code=1)
-    
+
     config = load_config(str(root))
-    
+
     if not template:
         template = usagetracker.get_project_last_template(str(root))
-    
+
     if template:
         config["template"] = template
     if no_badges:
         config["include_badges"] = False
     config["max_tree_depth"] = depth
-    
+
     if ai:
         config["ai_enabled"] = True
     if auto_ai:
         config["ai_enabled"] = True
-    
+
     use_ai = config.get("ai_enabled", False) or auto_ai
-    
+
     if use_ai:
         usagetracker.show_key_setup()
-    
+
     output_path = root / output
     if output_path.exists() and not dry_run and not force:
         readme_info = usagetracker.get_project_readme_info(str(root))
-        
+
         if readme_info.get("last_readme_mtime"):
             current_mtime = output_path.stat().st_mtime
             last_gen_time = readme_info.get("last_generate_time", 0)
-            
+
             if current_mtime > last_gen_time:
-                console.print(f"[yellow]Warning: README.md has been modified since last generation.[/yellow]")
-                console.print("[dim]Use --force to overwrite or regenerate manually.[/dim]")
-        
-        overwrite = typer.confirm(f"'{output}' already exists. Overwrite?", default=False)
+                console.print(
+                    f"[yellow]Warning: README.md has been modified since last generation.[/yellow]"
+                )
+                console.print(
+                    "[dim]Use --force to overwrite or regenerate manually.[/dim]"
+                )
+
+        overwrite = typer.confirm(
+            f"'{output}' already exists. Overwrite?", default=False
+        )
         if not overwrite:
             console.print("[yellow]Cancelled.[/yellow]")
             raise typer.Exit(code=0)
-    
+
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -735,67 +822,74 @@ def generate(
     ) as progress:
         task = progress.add_task("Scanning project...", total=None)
         scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-        
+
         progress.update(task, description="Detecting stack...")
         detection = detect_stack(scan)
-        
+
         if use_ai:
             allowed, message = usagetracker.check_free_limit()
-            
+
             if not allowed:
                 can_continue = usagetracker.handle_exhausted()
                 if not can_continue:
                     raise typer.Exit(code=1)
-            
+
             if "Free use" in message:
                 console.print(f"[yellow]{message}[/yellow]")
-            
+
             progress.update(task, description="Generating README with Grok AI...")
             try:
                 readme = grok.generate_ai_readme(scan, detection, config)
             except Exception as e:
-                console.print(f"[yellow]AI generation failed: {e}, falling back to template[/yellow]")
+                console.print(
+                    f"[yellow]AI generation failed: {e}, falling back to template[/yellow]"
+                )
                 readme = generate_readme(scan, detection, config)
         else:
             progress.update(task, description="Generating README...")
             readme = generate_readme(scan, detection, config)
-    
+
     if dry_run:
         console.print(Panel(readme, title="[cyan]README Preview[/cyan]", expand=False))
     else:
         save_readme(readme, str(output_path))
-        
-        usagetracker.save_project_cache(str(root), {"template": config.get("template", "standard")})
+
+        usagetracker.save_project_cache(
+            str(root), {"template": config.get("template", "standard")}
+        )
         usagetracker.save_project_readme_info(str(root), str(output_path))
-        
+
         credits_msg = usagetracker.get_remaining_credits()
-        
-        console.print(Panel(
-            f"[green]README generated![/green]\n\n"
-            f"  Project  : [bold]{scan['name']}[/bold]\n"
-            f"  Language : [bold]{detection['primary_lang']}[/bold]\n"
-            f"  Type     : [bold]{detection['project_type']}[/bold]\n"
-            f"  Template : [bold]{config['template']}[/bold]\n"
-            f"  Saved to : [bold]{output_path}[/bold]\n\n"
-            f"{credits_msg}",
-            title="projectreadmegen",
-            border_style="green",
-        ))
+
+        console.print(
+            Panel(
+                f"[green]README generated![/green]\n\n"
+                f"  Project  : [bold]{scan['name']}[/bold]\n"
+                f"  Language : [bold]{detection['primary_lang']}[/bold]\n"
+                f"  Type     : [bold]{detection['project_type']}[/bold]\n"
+                f"  Template : [bold]{config['template']}[/bold]\n"
+                f"  Saved to : [bold]{output_path}[/bold]\n\n"
+                f"{credits_msg}",
+                title="projectreadmegen",
+                border_style="green",
+            )
+        )
 
 
 @app.command()
 def interactive(
     path: str = typer.Argument(".", help="Path to the project directory"),
-    ai: bool = typer.Option(False, "--ai", "-a", "--grok",
-        help="Use Grok AI to generate enhanced README"),
+    ai: bool = typer.Option(
+        False, "--ai", "-a", "--grok", help="Use Grok AI to generate enhanced README"
+    ),
 ):
     """Interactive mode — answer questions to customize your README."""
     console = Console()
     console.print("[bold cyan]projectreadmegen — Interactive Mode[/bold cyan]\n")
-    
+
     root = Path(path).resolve()
     config = load_config(str(root))
-    
+
     if ai:
         usagetracker.show_key_setup()
         allowed, message = usagetracker.check_free_limit()
@@ -811,7 +905,9 @@ def interactive(
         try:
             readme = grok.generate_ai_readme(scan, detection, config)
         except Exception:
-            console.print("[yellow]AI generation unavailable. Falling back to template.[/yellow]")
+            console.print(
+                "[yellow]AI generation unavailable. Falling back to template.[/yellow]"
+            )
             readme = generate_readme(scan, detection, config)
     else:
         config["author"] = typer.prompt("Your name")
@@ -821,25 +917,27 @@ def interactive(
         )
         include_tree = typer.confirm("Include folder tree in README?", default=True)
         config["include_tree"] = include_tree
-        
+
         scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
         detection = detect_stack(scan)
         readme = generate_readme(scan, detection, config)
-    
+
     output_path = root / config["output_file"]
     save_readme(readme, str(output_path))
-    
+
     credits_msg = usagetracker.get_remaining_credits()
-    
-    console.print(Panel(
-        f"[green]README generated![/green]\n\n"
-        f"  Project  : [bold]{scan['name']}[/bold]\n"
-        f"  Mode     : [bold]Interactive {'(AI)' if ai else '(Template)'}[/bold]\n"
-        f"  Saved to : [bold]{output_path}[/bold]\n\n"
-        f"{credits_msg}",
-        title="projectreadmegen",
-        border_style="green",
-    ))
+
+    console.print(
+        Panel(
+            f"[green]README generated![/green]\n\n"
+            f"  Project  : [bold]{scan['name']}[/bold]\n"
+            f"  Mode     : [bold]Interactive {'(AI)' if ai else '(Template)'}[/bold]\n"
+            f"  Saved to : [bold]{output_path}[/bold]\n\n"
+            f"{credits_msg}",
+            title="projectreadmegen",
+            border_style="green",
+        )
+    )
 
 
 @app.command()
@@ -853,9 +951,13 @@ def web(
     from projectreadmegen.detector import detect_stack
     from projectreadmegen.generator import generate_readme
     from pathlib import Path
-    
+
     web_dir = Path(__file__).parent.parent.parent / "web"
-    flask_app = Flask(__name__, template_folder=str(web_dir / "templates"), static_folder=str(web_dir / "static"))
+    flask_app = Flask(
+        __name__,
+        template_folder=str(web_dir / "templates"),
+        static_folder=str(web_dir / "static"),
+    )
 
     @flask_app.route("/")
     def web_index():
@@ -868,12 +970,12 @@ def web(
         template = data.get("template", "standard")
         author = data.get("author", "")
         username = data.get("github_username", "")
-        
+
         if not tree_txt:
             return jsonify({"error": "No folder tree provided."}), 400
-        
+
         scan_result = parse_tree_to_scan(tree_txt)
-        
+
         config = {
             "template": template,
             "include_badges": True,
@@ -883,19 +985,18 @@ def web(
             "author": author,
             "github_username": username,
         }
-        
+
         detection = detect_stack(scan_result)
         readme = generate_readme(scan_result, detection, config)
-        
-        return jsonify({
-            "readme": readme,
-            "language": detection["primary_lang"],
-            "type": detection["project_type"],
-            "license": detection["license"],
-        })
 
-    def _parse_tree_to_scan_web(tree_text: str) -> dict:
-        return _parse_tree_to_scan(tree_text)
+        return jsonify(
+            {
+                "readme": readme,
+                "language": detection["primary_lang"],
+                "type": detection["project_type"],
+                "license": detection["license"],
+            }
+        )
 
     console.print(f"[green]Starting web interface at http://{host}:{port}[/green]")
     flask_app.run(host=host, port=port, debug=False)

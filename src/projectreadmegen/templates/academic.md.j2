@@ -19,16 +19,18 @@ This project was created as part of academic coursework. It demonstrates concept
 ## Installation & Setup
 
 ```bash
-git clone https://github.com/{{ github_username }}/{{ project_raw_name }}.git
+git clone {{ github_url }}/{{ project_raw_name }}.git
 cd {{ project_raw_name }}
 {{ install_cmd }}
 ```
 
+{% if run_cmd %}
 ## How to Run
 
 ```bash
 {{ run_cmd }}
 ```
+{% endif %}
 
 {% if folder_tree %}
 
@@ -47,7 +49,7 @@ cd {{ project_raw_name }}
 
 {{ author }}
 
-GitHub: [@{{ github_username }}](https://github.com/{{ github_username }})
+GitHub: [@{{ github_username }}]({{ github_url }})
 
 {% if has_license %}
 

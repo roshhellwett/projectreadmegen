@@ -18,16 +18,18 @@
 ## Installation
 
 ```bash
-git clone https://github.com/{{ github_username }}/{{ project_raw_name }}.git
+git clone {{ github_url }}/{{ project_raw_name }}.git
 cd {{ project_raw_name }}
 {{ install_cmd }}
 ```
 
+{% if run_cmd %}
 ## Usage
 
 ```bash
 {{ run_cmd }}
 ```
+{% endif %}
 
 {% if folder_tree %}
 

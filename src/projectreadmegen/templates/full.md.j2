@@ -89,7 +89,7 @@
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/{{ github_username }}/{{ project_raw_name }}.git
+git clone {{ github_url }}/{{ project_raw_name }}.git
 
 # 2. Navigate to project folder
 cd {{ project_raw_name }}
@@ -98,18 +98,19 @@ cd {{ project_raw_name }}
 {{ install_cmd }}
 ```
 
+{% if run_cmd %}
 ## Usage
 
 ```bash
 {{ run_cmd }}
 ```
+{% endif %}
 
 {% if folder_tree %}
 
 ## Project Structure
 
 ```
-{{ project_raw_name }}/
 {{ folder_tree }}
 ```
 {% endif %}

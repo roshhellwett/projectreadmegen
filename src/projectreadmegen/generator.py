@@ -23,61 +23,67 @@ def generate_readme(scan_result: dict, detection: dict, config: dict) -> str:
         str: Full README.md content as a string.
     """
     from projectreadmegen.config import VALID_TEMPLATES
-    
-    template_name   = config.get("template", "standard")
-    template_file   = f"{template_name}.md.j2"
-    templates_dir   = Path(__file__).parent / "templates"
-    
+
+    template_name = config.get("template", "standard")
+    template_file = f"{template_name}.md.j2"
+    templates_dir = Path(__file__).parent / "templates"
+
     if template_name not in VALID_TEMPLATES:
         logger.warning(f"Unknown template '{template_name}', using 'standard'")
         template_name = "standard"
         template_file = f"{template_name}.md.j2"
-    
+
     if not (templates_dir / template_file).exists():
         logger.error(f"Template '{template_file}' not found in {templates_dir}")
         raise FileNotFoundError(
             f"Template '{template_file}' not found in {templates_dir}. "
             f"Available: {', '.join(VALID_TEMPLATES)}"
         )
-    
+
     logger.debug(f"Using template: {template_name}")
-    
+
     env = Environment(
         loader=FileSystemLoader(str(templates_dir)),
         autoescape=select_autoescape([]),
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    
+
     template = env.get_template(template_file)
-    
+
+    github_username = config.get("github_username", "")
+    if not github_username:
+        github_username = "your-username"
+
     context = {
-        "project_name":    _format_title(scan_result["name"]),
+        "project_name": _format_title(scan_result["name"]),
         "project_raw_name": scan_result["name"],
-        "description":     detection["description_hint"],
-        "author":          config.get("author", ""),
-        "github_username": config.get("github_username", ""),
-        
-        "badge_line":      build_badge_line(detection) if config.get("include_badges") else "",
-        
-        "primary_lang":    detection["primary_lang"],
-        "all_languages":   detection["languages"],
-        "project_type":    detection["project_type"],
-        
-        "install_cmd":     detection["install_cmd"],
-        "run_cmd":         detection["run_cmd"],
-        
-        "folder_tree":     scan_result["tree"] if config.get("include_tree") else "",
-        
-        "has_license":      scan_result["has_license"],
+        "description": detection["description_hint"],
+        "author": config.get("author", ""),
+        "github_username": github_username,
+        "github_url": f"https://github.com/{github_username}",
+        "badge_line": build_badge_line(detection)
+        if config.get("include_badges")
+        else "",
+        "primary_lang": detection["primary_lang"],
+        "all_languages": detection["languages"],
+        "project_type": detection["project_type"],
+        "install_cmd": detection["install_cmd"]
+        if detection["install_cmd"] and not detection["install_cmd"].startswith("#")
+        else "",
+        "run_cmd": detection["run_cmd"]
+        if detection["run_cmd"] and not detection["run_cmd"].startswith("#")
+        else "",
+        "folder_tree": scan_result["tree"] if config.get("include_tree") else "",
+        "has_license": scan_result["has_license"],
         "has_contributing": scan_result["has_contributing"],
-        "has_tests":        detection["has_tests"],
-        "has_docs":         detection["has_docs"],
-        "license_id":       detection["license"],
+        "has_tests": detection["has_tests"],
+        "has_docs": detection["has_docs"],
+        "license_id": detection["license"],
     }
-    
+
     logger.debug(f"Rendering template with context keys: {list(context.keys())}")
-    
+
     return template.render(**context)
 
 
