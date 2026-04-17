@@ -7,33 +7,46 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 USAGE_FILE = "+projectreadmegen_usage.json"
-FREE_USES_LIMIT = 5
 DEFAULT_API_KEY = None
 
 GROQ_KEY_INFO = """
-=============================================================
-         Get Your Own Free Groq API Key
-=============================================================
+================================================================
+                    Groq API Key Setup
+================================================================
 
-Steps to generate your own API key:
+A Groq API key is required to use AI-powered features.
+
+Steps to get your free API key:
 1. Visit: https://console.groq.com/keys
 2. Click "Create Key" button
 3. Copy the generated key
-4. Set it as environment variable:
-   
-   Windows (PowerShell):
-   $env:GROQ_API_KEY="your_key_here"
-   
-   Windows (CMD):
-   set GROQ_API_KEY=your_key_here
-   
-   Linux/Mac:
-   export GROQ_API_KEY=your_key_here
+4. Paste it below
 
-Or add to your project config file (readmegen.config.json):
-{"groq_api_key": "your_key_here"}
+Your key will be securely stored on your device.
 
-=============================================================
+================================================================
+"""
+
+GITHUB_TOKEN_INFO = """
+================================================================
+               GitHub API Token (Optional)
+================================================================
+
+A GitHub API token allows us to fetch more detailed information
+about your GitHub profile, including:
+- All your repositories
+- Programming languages used
+- More accurate statistics
+
+To create a token:
+1. Visit: https://github.com/settings/tokens
+2. Click "Generate new token (classic)"
+3. Select scopes: "read:user" and "public_repo"
+4. Copy and paste the token below
+
+This is optional but recommended for best results.
+
+================================================================
 """
 
 CACHE_FILE = "+projectreadmegen_cache.json"
@@ -62,8 +75,8 @@ def load_usage_data():
             with open(path, "r") as f:
                 return json.load(f)
         except Exception:
-            return {"uses_today": 0, "date": "", "user_key_set": False}
-    return {"uses_today": 0, "date": "", "user_key_set": False}
+            return {"user_key_set": False, "github_token_set": False}
+    return {"user_key_set": False, "github_token_set": False}
 
 
 def save_usage_data(data):
@@ -113,126 +126,215 @@ def save_project_cache(project_path, data):
         logger.warning(f"Could not save cache: {e}")
 
 
+def check_api_key():
+    """Check if Groq API key is configured."""
+    api_key = get_api_key()
+    if api_key:
+        return True
+    return False
+
+
 def check_free_limit():
-    data = load_usage_data()
-    today = str(date.today())
-
-    if data.get("date") != today:
-        data["uses_today"] = 0
-        data["date"] = today
-
-    user_key = os.environ.get("GROQ_API_KEY") or os.environ.get("groq_api_key")
-    if user_key:
-        data["user_key_set"] = True
-
-    if data.get("user_key_set"):
+    """Check if API is available. Now requires user's own API key."""
+    api_key = get_api_key()
+    if api_key:
         return True, "Using your own API key"
+    return False, "API key required"
 
-    if data["uses_today"] >= FREE_USES_LIMIT:
-        return False, "exhausted"
 
-    data["uses_today"] += 1
-    save_usage_data(data)
-    remaining = FREE_USES_LIMIT - data["uses_today"]
-    return (
-        True,
-        f"Free use ({data['uses_today']}/{FREE_USES_LIMIT}), {remaining} remaining today",
+def require_api_key():
+    """Prompt user to set up API key when none is configured."""
+    from rich.console import Console
+    from rich.panel import Panel
+
+    console = Console()
+
+    console.print(
+        Panel(
+            """
+[bold red]API Key Required![/bold red]
+
+To use AI-powered features, you need to set up your own Groq API key.
+
+[bold yellow]How to get your free API key:[/bold yellow]
+
+1. Visit: [link]https://console.groq.com/keys[/link]
+2. Click "Create Key" button
+3. Copy the generated key
+4. Return here and paste it
+
+[dim]This is a one-time setup. Your key will be stored securely.[/dim]
+        """,
+            title="Setup Required",
+            border_style="red",
+        )
     )
+
+    key = input("\nPaste your Groq API key here: ").strip()
+
+    if key and key.startswith("gsk_"):
+        os.environ["GROQ_API_KEY"] = key
+        data = load_usage_data()
+        data["user_key_set"] = True
+        save_usage_data(data)
+        console.print("\n[green]API key saved successfully![/green]")
+        console.print("[dim]You can now use AI-powered features unlimited times.[/dim]")
+        input("\nPress Enter to continue...")
+        return True
+    elif key:
+        console.print("\n[red]Invalid key format![/red]")
+        console.print("[yellow]Key should start with 'gsk_'[/yellow]")
+        input("\nPress Enter to continue...")
+
+    return False
 
 
 def handle_exhausted():
-    print("\n" + "=" * 50)
-    print("  Free credits exhausted!")
-    print("=" * 50)
-    print("  1 - Wait 24 hours")
-    print("  2 - Add your own Groq API key")
-    print("=" * 50)
-
-    choice = input("Choose option (1/2): ").strip()
-
-    if choice == "2":
-        print("\nGet free key at: https://console.groq.com/keys")
-        key = input("Paste your Groq API key: ").strip()
-        if key and key.startswith("gsk_"):
-            os.environ["GROQ_API_KEY"] = key
-            data = load_usage_data()
-            data["user_key_set"] = True
-            save_usage_data(data)
-            print("\nAPI key saved! You can now use --ai unlimited times.")
-            return True
-        else:
-            print("Invalid key format. Key should start with 'gsk_'")
-            return False
-    else:
-        print("\nPlease try again after 24 hours.")
-        return False
+    """Redirect to API key setup (kept for backward compatibility)."""
+    return require_api_key()
 
 
 def show_key_setup():
-    data = load_usage_data()
-
-    if data.get("user_key_set"):
+    """Show key setup prompt if API key is not configured."""
+    if check_api_key():
         return
 
-    user_key = os.environ.get("GROQ_API_KEY") or os.environ.get("groq_api_key")
-    if user_key:
+    from rich.console import Console
+    from rich.panel import Panel
+
+    console = Console()
+
+    console.print(
+        Panel(
+            """
+[bold yellow]Setup Your Groq API Key[/bold yellow]
+
+To use AI-powered features, you need your own Groq API key.
+
+[bold]Get your free key:[/bold]
+1. Visit: https://console.groq.com/keys
+2. Create a new key
+3. Copy and paste below
+
+[dim]This is a one-time setup.[/dim]
+        """,
+            title="API Key Required",
+            border_style="yellow",
+        )
+    )
+
+    key = input("\nPaste your Groq API key (or press Enter to skip): ").strip()
+
+    if key and key.startswith("gsk_"):
+        os.environ["GROQ_API_KEY"] = key
+        data = load_usage_data()
         data["user_key_set"] = True
         save_usage_data(data)
-        return
-
-    if data.get("setup_shown"):
-        return
-
-    data["setup_shown"] = True
-    save_usage_data(data)
-
-    print(GROQ_KEY_INFO)
-
-    response = input("Do you want to use your own API key? (y/n): ").strip().lower()
-
-    if response == "y":
-        key = input("Paste your Groq API key here: ").strip()
-        if key:
-            os.environ["GROQ_API_KEY"] = key
-            data["user_key_set"] = True
-            save_usage_data(data)
-            print("Your API key is now set!")
+        console.print("\n[green]API key configured![/green]")
     else:
-        print(f"\nUsing free tier: {FREE_USES_LIMIT} uses per day")
-        print("After exhausting, either wait 24 hours or get your own key.")
+        console.print("\n[dim]Skipped. You can add your key later from the menu.[/dim]")
 
 
 def get_api_key():
+    """Get Groq API key from environment or return None."""
     user_key = os.environ.get("GROQ_API_KEY") or os.environ.get("groq_api_key")
     if user_key:
         return user_key
     if DEFAULT_API_KEY:
         return DEFAULT_API_KEY
-    logger.warning(
-        "No GROQ_API_KEY found. Please set GROQ_API_KEY environment variable."
-    )
     return None
 
 
-def get_remaining_credits():
+def save_github_token(token: str):
+    """Save GitHub token to usage data file."""
     data = load_usage_data()
-    today = str(date.today())
+    data["github_token"] = token
+    data["github_token_set"] = True
+    save_usage_data(data)
+    logger.info("GitHub token saved successfully")
 
-    if data.get("date") != today:
-        remaining = FREE_USES_LIMIT
-    else:
-        remaining = FREE_USES_LIMIT - data.get("uses_today", 0)
 
-    if data.get("user_key_set") or os.environ.get("GROQ_API_KEY"):
+def get_github_token():
+    """Get stored GitHub token from usage data file."""
+    data = load_usage_data()
+    return data.get("github_token", "")
+
+
+def has_github_token():
+    """Check if GitHub token is stored."""
+    data = load_usage_data()
+    return bool(data.get("github_token", ""))
+
+
+def clear_github_token():
+    """Remove stored GitHub token."""
+    data = load_usage_data()
+    if "github_token" in data:
+        del data["github_token"]
+    data["github_token_set"] = False
+    save_usage_data(data)
+
+
+def prompt_github_token():
+    """Prompt user for GitHub token if not already set."""
+    from rich.console import Console
+    from rich.panel import Panel
+
+    if has_github_token():
+        return get_github_token()
+
+    console = Console()
+
+    console.print(
+        Panel(
+            """
+[bold cyan]GitHub API Token (Optional)[/bold cyan]
+
+Adding a GitHub token helps us fetch more detailed information
+about your profile for better README generation.
+
+[bold green]Benefits:[/bold green]
+- Access all your repositories
+- See your programming language stats
+- Get accurate follower/following counts
+- Fetch repository descriptions and topics
+
+[bold yellow]How to create a token:[/bold yellow]
+1. Visit: https://github.com/settings/tokens
+2. Generate new token (classic)
+3. Select: [green]read:user[/green] and [green]public_repo[/green]
+4. Copy and paste below
+
+[dim]Press Enter to skip (basic info will be used instead)[/dim]
+        """,
+            title="GitHub Token",
+            border_style="cyan",
+        )
+    )
+
+    token = input("\nPaste GitHub token (or press Enter to skip): ").strip()
+
+    if token:
+        save_github_token(token)
+        console.print("\n[green]GitHub token saved![/green]")
+        return token
+
+    console.print("\n[dim]Skipped. Using basic profile information.[/dim]")
+    return ""
+
+
+def get_remaining_credits():
+    """Get status message for remaining credits/API key status."""
+    api_key = get_api_key()
+
+    if api_key:
         return "[dim]Using your own API key | Powered by Zenith Open Source Projects | Developer - roshhellwett[/dim]"
 
-    if remaining > 0:
-        return f"[dim]{remaining} free credit(s) remaining today | Powered by Zenith Open Source Projects | Developer - roshhellwett[/dim]"
-    else:
-        return "[dim]Free credits exhausted | Powered by Zenith Open Source Projects | Developer - roshhellwett[/dim]"
+    return "[red]API Key Required[/red] | Powered by Zenith Open Source Projects"
 
 
 def get_project_last_template(project_path):
+    """Get last used template for a project from cache."""
     cache = load_project_cache(project_path)
     return cache.get("last_template", "standard")
 

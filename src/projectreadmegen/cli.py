@@ -16,6 +16,7 @@ from projectreadmegen.generator import generate_readme, save_readme
 from projectreadmegen.config import PRESETS
 from projectreadmegen import grok
 from projectreadmegen import usagetracker
+from projectreadmegen import github_profile
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -150,13 +151,14 @@ def show_main_menu():
   [green]5[/green]  Update projectreadmegen
   [green]6[/green]  Start Web Server
   [green]7[/green]  Help & Commands
-  [green]8[/green]  Exit
+  [green]8[/green]  Create GitHub Profile README  [NEW]
+  [green]9[/green]  Exit
         """,
             title="projectreadmegen Menu",
             border_style="cyan",
         )
     )
-    choice = input("\nEnter your choice (1-8): ").strip()
+    choice = input("\nEnter your choice (1-9): ").strip()
     return choice
 
 
@@ -201,17 +203,19 @@ def handle_manage_api():
 
 [bold]Options:[/bold]
   [green]1[/green]  Update API Key (replace current)
-  [green]2[/green]  Remove API Key (use free credits)
-  [green]3[/green]  Go Back
+  [green]2[/green]  Remove API Key
+  [green]3[/green]  Manage GitHub Token (for GitHub Profile README)
+  [green]4[/green]  Go Back
         """)
     else:
         console.print(f"""
 [bold yellow]Current Status:[/bold yellow]
-  No custom API key set. Using free credits (5/day).
+  No API key configured. AI features require an API key.
 
 [bold]Options:[/bold]
   [green]1[/green]  Add Your Own API Key
-  [green]2[/green]  Go Back
+  [green]2[/green]  Manage GitHub Token (for GitHub Profile README)
+  [green]3[/green]  Go Back
         """)
 
     choice = input("\nEnter choice: ").strip()
@@ -232,8 +236,10 @@ def handle_manage_api():
         data = usagetracker.load_usage_data()
         data["user_key_set"] = False
         usagetracker.save_usage_data(data)
-        console.print("[green]API key removed. Now using free credits.[/green]")
+        console.print("[green]API key removed.[/green]")
         input("\nPress Enter to continue...")
+    elif has_key and choice == "3":
+        handle_github_token_settings()
     elif not has_key and choice == "1":
         console.print(f"""
 [bold]Get your free API key:[/bold]
@@ -251,7 +257,9 @@ def handle_manage_api():
         else:
             console.print("[red]Invalid key format. Key should start with 'gsk_'[/red]")
         input("\nPress Enter to continue...")
-    elif choice == ("3" if has_key else "2"):
+    elif not has_key and choice == "2":
+        handle_github_token_settings()
+    elif (has_key and choice == "4") or (not has_key and choice == "3"):
         return
 
 
@@ -261,17 +269,19 @@ def handle_credits_status():
 
     user_key = os.environ.get("GROQ_API_KEY")
     has_key = bool(user_key) or data.get("user_key_set")
+    has_github_token = usagetracker.has_github_token()
 
     console.print(f"""
 [bold yellow]Credits Status:[/bold yellow]
 
-  API Key: {"[green]Configured[/green]" if has_key else "[red]Not configured[/red]"}
+  Groq API Key: {"[green]Configured[/green]" if has_key else "[red]Not configured[/red]"}
+  GitHub Token: {"[green]Configured[/green]" if has_github_token else "[dim]Not configured[/dim]"}
+  
   {msg}
 
 [bold]Details:[/bold]
-  - Free tier: 5 uses per day
-  - With own API: Unlimited uses
-  - Credits reset at midnight
+  - Groq API key required for AI features
+  - GitHub token optional for better GitHub Profile README
     """)
     input("\nPress Enter to continue...")
 
@@ -302,6 +312,289 @@ def handle_help():
 
 [dim]Press Ctrl+C to exit anytime[/dim]
     """)
+    input("\nPress Enter to continue...")
+
+
+def handle_github_token_settings():
+    """Manage GitHub API token settings."""
+    has_token = usagetracker.has_github_token()
+    current_token = usagetracker.get_github_token()
+
+    if has_token and current_token:
+        masked_token = (
+            current_token[:8] + "..." + current_token[-4:]
+            if len(current_token) > 12
+            else "***"
+        )
+    else:
+        masked_token = None
+
+    console.print(f"""
+[bold cyan]GitHub Token Settings[/bold cyan]
+
+[bold yellow]Current Status:[/bold yellow]
+  {"[green]Configured[/green]" if has_token else "[dim]Not configured[/dim]"}
+  {"Token: " + masked_token if masked_token else ""}
+
+[bold yellow]What is a GitHub Token?[/bold yellow]
+  A GitHub token helps us fetch more detailed information
+  about your profile for creating better GitHub Profile READMEs.
+  
+  Benefits:
+  - Access all your repositories
+  - See programming language statistics
+  - Get accurate follower counts
+  - Fetch repository descriptions
+
+[bold yellow]Options:[/bold yellow]
+  [green]1[/green]  {"Update" if has_token else "Add"} GitHub Token
+  [green]2[/green]  Remove Token {"(already not set)" if not has_token else ""}
+  [green]3[/green]  Go Back
+    """)
+
+    choice = input("\nEnter choice: ").strip()
+
+    if choice == "1":
+        console.print("""
+[bold]Create a GitHub Token:[/bold]
+1. Visit: https://github.com/settings/tokens
+2. Click "Generate new token (classic)"
+3. Select scopes: [green]read:user[/green] and [green]public_repo[/green]
+4. Click "Generate token"
+5. Copy and paste below
+        """)
+        token = input("\nPaste GitHub token (or press Enter to cancel): ").strip()
+        if token:
+            usagetracker.save_github_token(token)
+            console.print("[green]GitHub token saved![/green]")
+        else:
+            console.print("[dim]Cancelled.[/dim]")
+        input("\nPress Enter to continue...")
+    elif choice == "2" and has_token:
+        usagetracker.clear_github_token()
+        console.print("[green]GitHub token removed.[/green]")
+        input("\nPress Enter to continue...")
+    elif choice == "3":
+        return
+
+
+def handle_github_profile():
+    """Handle GitHub Profile README generation."""
+    if not usagetracker.check_api_key():
+        console.print(
+            Panel(
+                """
+[bold red]API Key Required[/bold red]
+
+To create a GitHub Profile README, you need to set up your Groq API key first.
+
+[bold yellow]Get your free API key:[/bold yellow]
+1. Visit: https://console.groq.com/keys
+2. Create a new key
+3. Copy and paste below
+            """,
+                title="Setup Required",
+                border_style="red",
+            )
+        )
+
+        key = input("\nPaste your Groq API key: ").strip()
+        if key and key.startswith("gsk_"):
+            os.environ["GROQ_API_KEY"] = key
+            data = usagetracker.load_usage_data()
+            data["user_key_set"] = True
+            usagetracker.save_usage_data(data)
+            console.print("[green]API key saved![/green]\n")
+        else:
+            console.print("[red]Invalid key format. Cancelling.[/red]")
+            input("\nPress Enter to continue...")
+            return
+
+    console.print(
+        Panel(
+            """
+[bold cyan]GitHub Profile README Generator[/bold cyan]
+
+Create a professional README for your GitHub profile!
+
+[bold yellow]Features:[/bold yellow]
+- AI-powered personalized content
+- Multiple style options (Basic, Professional, Stylish, Unique)
+- Automatic repository and language detection
+- Beautiful badges and stats cards
+
+[bold]Let's get started...[/bold]
+        """,
+            title="GitHub Profile README",
+            border_style="cyan",
+        )
+    )
+
+    username = input("\nEnter your GitHub username: ").strip()
+    if not username:
+        console.print("[red]Username cannot be empty.[/red]")
+        input("\nPress Enter to continue...")
+        return
+
+    is_valid, error = github_profile.validate_github_username(username)
+    if not is_valid:
+        console.print(f"[red]Invalid username: {error}[/red]")
+        input("\nPress Enter to continue...")
+        return
+
+    profile_url = input(
+        "Enter your GitHub profile URL (e.g., https://github.com/" + username + "): "
+    ).strip()
+    if not profile_url:
+        profile_url = f"https://github.com/{username}"
+
+    console.print("""
+[bold cyan]Select Style:[/bold yellow]
+
+  [green]1[/green]  Basic README
+      Clean, simple, and professional
+      
+  [green]2[/green]  Professional README
+      Career-focused with detailed sections
+      
+  [green]3[/green]  Stylish with Badges
+      Visually impressive with stats cards
+      
+  [green]4[/green]  Unique & Creative
+      Most detailed and eye-catching
+    """)
+
+    style_choice = input("\nEnter style (1-4, default: 2): ").strip() or "2"
+
+    style_map = {"1": "basic", "2": "professional", "3": "stylish", "4": "unique"}
+    style = style_map.get(style_choice, "professional")
+
+    output_path = (
+        input("\nEnter output path (default: current directory): ").strip() or "."
+    )
+
+    success, folder_path = github_profile.create_output_folder(username, output_path)
+    if not success:
+        console.print(f"[red]Error: {folder_path}[/red]")
+        input("\nPress Enter to continue...")
+        return
+
+    exists, readme_path = github_profile.check_readme_exists(folder_path)
+    if exists:
+        console.print(
+            f"\n[yellow]Warning: README.md already exists in {folder_path}[/yellow]"
+        )
+        overwrite = input("Overwrite? (y/N): ").strip().lower()
+        if overwrite != "y":
+            console.print("[dim]Cancelled.[/dim]")
+            input("\nPress Enter to continue...")
+            return
+
+    github_token = (
+        usagetracker.get_github_token() if usagetracker.has_github_token() else None
+    )
+
+    if not github_token:
+        console.print("""
+[bold cyan]GitHub Token (Optional)[/bold cyan]
+
+A GitHub token allows us to fetch detailed information about your profile
+for a more personalized README. This is recommended but optional.
+
+[bold]Benefits:[/bold]
+- Access all your repositories
+- See your programming languages
+- Get accurate stats
+
+[bold]Press Enter to skip[/bold] or type [green]y[/green] to add a token now:""")
+        add_token = input().strip().lower()
+        if add_token == "y":
+            console.print("""
+1. Visit: https://github.com/settings/tokens
+2. Create token with [green]read:user[/green] scope
+3. Paste below
+            """)
+            token = input("GitHub token: ").strip()
+            if token:
+                github_token = token
+                usagetracker.save_github_token(token)
+                console.print("[green]Token saved![/green]\n")
+
+    console.print("\n[bold cyan]Fetching GitHub profile data...[/bold cyan]")
+
+    user_data = None
+    repos = []
+    languages = {}
+
+    try:
+        user_data = github_profile.fetch_github_user(username, github_token)
+        if not user_data:
+            console.print(
+                f"[yellow]Could not fetch profile data for @{username}[/yellow]"
+            )
+            console.print("[dim]Will proceed with profile URL only.[/dim]\n")
+    except Exception as e:
+        console.print(f"[yellow]Could not fetch profile: {str(e)}[/yellow]")
+        console.print("[dim]Proceeding with limited information...[/dim]\n")
+
+    if user_data:
+        try:
+            repos = github_profile.fetch_user_repos(username, github_token)
+            languages = github_profile.calculate_language_stats(repos)
+        except Exception as e:
+            console.print(f"[yellow]Could not fetch repositories: {str(e)}[/yellow]")
+
+    console.print(f"[green]Found {len(repos)} repositories[/green]")
+    if languages:
+        top_langs = list(languages.items())[:5]
+        console.print(
+            f"[green]Top languages: {', '.join([l[0] for l in top_langs])}[/green]\n"
+        )
+
+    console.print(f"[bold cyan]Generating {style} README...[/bold cyan]\n")
+
+    try:
+        readme_content = github_profile.generate_readme_content(
+            username=username,
+            profile_url=profile_url,
+            style=style,
+            user_data=user_data,
+            repos=repos,
+            languages=languages,
+        )
+
+        success, result = github_profile.save_github_readme(
+            readme_content, folder_path, username
+        )
+
+        if success:
+            console.print(
+                Panel(
+                    f"""
+[bold green]GitHub Profile README Created Successfully![/bold green]
+
+  Username  : @{username}
+  Style     : {style.capitalize()}
+  Location  : {result}
+
+[bold yellow]Next Steps:[/bold yellow]
+1. Copy the README.md to your GitHub profile repository
+2. The repository should be named: {username}
+3. Push to GitHub and see your new profile!
+
+[dim]Find your profile at: {profile_url}[/dim]
+                """,
+                    title="Success!",
+                    border_style="green",
+                )
+            )
+        else:
+            console.print(f"[red]Error saving README: {result}[/red]")
+
+    except Exception as e:
+        console.print(f"[red]Error generating README: {str(e)}[/red]")
+        console.print("[yellow]Please try again or check your API key.[/yellow]")
+
     input("\nPress Enter to continue...")
 
 
@@ -535,11 +828,8 @@ def handle_generate_mode(ai=False, path="."):
         config = load_config(str(root))
 
         if ai:
-            usagetracker.show_key_setup()
-            allowed, message = usagetracker.check_free_limit()
-
-            if not allowed:
-                can_continue = usagetracker.handle_exhausted()
+            if not usagetracker.check_api_key():
+                can_continue = usagetracker.require_api_key()
                 if not can_continue:
                     return
 
@@ -608,11 +898,8 @@ def handle_interactive_mode(ai=False, path="."):
         config = load_config(str(root))
 
         if ai:
-            usagetracker.show_key_setup()
-            allowed, message = usagetracker.check_free_limit()
-
-            if not allowed:
-                can_continue = usagetracker.handle_exhausted()
+            if not usagetracker.check_api_key():
+                can_continue = usagetracker.require_api_key()
                 if not can_continue:
                     return
 
@@ -686,6 +973,8 @@ def main_menu_loop():
             elif choice == "7":
                 handle_help()
             elif choice == "8":
+                handle_github_profile()
+            elif choice == "9":
                 console.print("\n[cyan]Thank you for using projectreadmegen![/cyan]\n")
                 break
             else:
@@ -788,8 +1077,8 @@ def generate(
 
     use_ai = config.get("ai_enabled", False) or auto_ai
 
-    if use_ai:
-        usagetracker.show_key_setup()
+    if use_ai and not usagetracker.check_api_key():
+        usagetracker.require_api_key()
 
     output_path = root / output
     if output_path.exists() and not dry_run and not force:
@@ -891,13 +1180,9 @@ def interactive(
     config = load_config(str(root))
 
     if ai:
-        usagetracker.show_key_setup()
-        allowed, message = usagetracker.check_free_limit()
-
-        if not allowed:
-            can_continue = usagetracker.handle_exhausted()
-            if not can_continue:
-                raise typer.Exit(code=1)
+        if not usagetracker.check_api_key():
+            console.print("[yellow]API key required for AI features.[/yellow]")
+            usagetracker.require_api_key()
 
         console.print("[yellow]Using AI to generate README...[/yellow]")
         scan = scan_directory(str(root), max_depth=config["max_tree_depth"])

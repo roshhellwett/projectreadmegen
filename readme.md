@@ -94,9 +94,32 @@ Run `python -m projectreadmegen` for interactive menu:
 3  Manage API Key
 4  View Credits Status
 5  Update projectreadmegen
-6  Help & Commands
-7  Exit
+6  Start Web Server
+7  Help & Commands
+8  Create GitHub Profile README
+9  Exit
 ```
+
+## GitHub Profile README Generator
+
+Create stunning GitHub profile READMEs with AI!
+
+```
+python -m projectreadmegen
+# Select option 8 - Create GitHub Profile README
+```
+
+### Features:
+- **AI-Powered** - Personalized content based on your profile
+- **Multiple Styles** - Basic, Professional, Stylish, Unique
+- **Auto-Detection** - Fetches your repositories and languages
+- **Beautiful Output** - Ready to use on your GitHub profile
+
+### Supported Styles:
+1. **Basic** - Clean and simple
+2. **Professional** - Career-focused with detailed sections
+3. **Stylish** - Visual stats cards and badges
+4. **Unique** - Creative and eye-catching layout
 
 ## Configuration
 
@@ -116,7 +139,9 @@ Create `readmegen.config.json` in project root:
 
 ## API Key
 
-Get free Groq API key: https://console.groq.com/keys
+A Groq API key is required for AI-powered features.
+
+Get your free API key: https://console.groq.com/keys
 
 ```bash
 # Set environment variable
@@ -131,18 +156,18 @@ $env:GROQ_API_KEY="your_key_here"
 - **Auto-detect** - Project type and tech stack detection
 - **Folder Tree** - ASCII tree visualization
 - **AI Generation** - Groq-powered enhanced README
+- **GitHub Profile** - Create professional GitHub profile READMEs
 - **4 Templates** - minimal, standard, full, academic
 - **Badges** - Auto language and license badges
 - **Smart Caching** - Faster repeated scans
 - **Template Memory** - Remembers last template per project
 - **Update Detection** - Warns if README modified externally
-- **Credit System** - 5 free AI uses/day (then use your own key)
 
 ## Credits
 
-- 5 free AI uses per day
+- Uses Groq API (Llama 3.3 70B) for AI generation
 - Add your own Groq API key for unlimited use
-- [Groq API Generator](https://console.groq.com/home)
+- [Groq API](https://console.groq.com/home)
 
 ---
 

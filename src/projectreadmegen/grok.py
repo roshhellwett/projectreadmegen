@@ -7,7 +7,11 @@ logger = logging.getLogger(__name__)
 
 
 class GrokClient:
-    def __init__(self, api_key: Optional[str] = None, base_url: str = "https://api.groq.com/openai/v1"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: str = "https://api.groq.com/openai/v1",
+    ):
         self.api_key = api_key or usagetracker.get_api_key()
         self.base_url = base_url
         if not self.api_key:
@@ -23,7 +27,9 @@ class GrokClient:
         max_tokens: int = 4000,
     ) -> str:
         if not self.api_key:
-            raise ValueError("API key not set. Set GROQ_API_KEY environment variable or pass api_key.")
+            raise ValueError(
+                "API key not set. Set GROQ_API_KEY environment variable or pass api_key."
+            )
 
         try:
             response = self.client.responses.create(
@@ -34,9 +40,9 @@ class GrokClient:
                 ],
                 max_output_tokens=max_tokens,
             )
-            
+
             return response.output_text
-            
+
         except Exception as e:
             logger.error(f"Groq API error: {e}")
             raise
@@ -84,7 +90,9 @@ def build_project_context(scan_result: dict, detection: dict, config: dict) -> s
     lines.append("")
     lines.append("Write a comprehensive README.md for this project. Include:")
     lines.append("1. Project title and description")
-    lines.append("2. Features section (fill in with likely features based on project type)")
+    lines.append(
+        "2. Features section (fill in with likely features based on project type)"
+    )
     lines.append("3. Installation instructions")
     lines.append("4. Usage instructions")
     lines.append("5. Tech stack table")
@@ -97,7 +105,9 @@ def build_project_context(scan_result: dict, detection: dict, config: dict) -> s
 def generate_ai_readme(scan_result: dict, detection: dict, config: dict) -> str:
     api_key = config.get("groq_api_key") or usagetracker.get_api_key()
     if not api_key:
-        raise ValueError("GROQ_API_KEY not set. Please set it in config or environment.")
+        raise ValueError(
+            "API key required. Please set your Groq API key using option 3 in the menu."
+        )
 
     client = GrokClient(api_key=api_key)
 

@@ -143,11 +143,8 @@ DEFAULT_CONFIG = {
     "groq_api_key": "",
     "author": "",
     "github_username": "",
-    "free_uses_remaining": 5,
-    "last_usage_date": "",
 }
 
-FREE_USES_LIMIT = 5
 USAGE_FILE = "projectreadmegen_usage.json"
 
 PRESETS = {
