@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "projectreadmegen"
-version         = "2.0.2"
+version         = "2.0.3"
 description     = "Auto-generate professional README files from folder structure with AI power"
 readme          = "README.md"
 requires-python = ">=3.10"
@@ -42,6 +42,7 @@ dependencies = [
     "jinja2>=3.1",
     "flask>=3.0",
     "openai>=1.0",
+    "requests>=2.28",
 ]
 
 [project.optional-dependencies]
