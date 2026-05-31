@@ -1,14 +1,14 @@
 # src/scanner.py
 
 import os
-import sys
 import json
 import logging
 import hashlib
 import pickle
+from fnmatch import fnmatch
 from pathlib import Path
 
-from projectreadmegen.config import SKIP_DIRS, SKIP_FILES, DEFAULT_CONFIG
+from projectreadmegen.config import SKIP_DIRS, SKIP_FILES
 
 logger = logging.getLogger(__name__)
 
@@ -20,21 +20,30 @@ def _ensure_cache_dir():
     _CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _is_skipped_file(filename: str) -> bool:
+    return any(fnmatch(filename, pattern) for pattern in SKIP_FILES)
+
+
+def _is_skipped_dir(dirname: str) -> bool:
+    return dirname.startswith(".") or any(fnmatch(dirname, pattern) for pattern in SKIP_DIRS)
+
+
 def _get_dir_hash(root: Path) -> str:
     """Generate a quick hash based on directory structure and modification times."""
     hasher = hashlib.sha256()
 
     try:
         for dirpath, dirnames, filenames in os.walk(root):
-            dirnames[:] = [
-                d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")
-            ]
+            dirnames[:] = [d for d in dirnames if not _is_skipped_dir(d)]
 
             rel_path = Path(dirpath).relative_to(root)
             hasher.update(str(rel_path).encode())
 
             for f in sorted(filenames):
-                if not f.startswith("."):
+                if (
+                    (not f.startswith(".") or f in [".gitignore", ".env.example"])
+                    and not _is_skipped_file(f)
+                ):
                     fpath = Path(dirpath) / f
                     try:
                         mtime = fpath.stat().st_mtime
@@ -93,7 +102,45 @@ def scan_directory(
             "file_extensions": list[str] — unique extensions found,
         }
     """
+    from projectreadmegen.exceptions import InvalidPathError, PermissionError as PermErr
+
+    # Validate input
+    if not root_path or not isinstance(root_path, str):
+        raise InvalidPathError(
+            f"Invalid path provided: {root_path}",
+            "Please provide a valid directory path.",
+        )
+
     root = Path(root_path).resolve()
+
+    if not root.exists():
+        raise InvalidPathError(
+            f"Directory does not exist: {root}",
+            f"The path '{root_path}' does not exist. Please check the path and try again.",
+        )
+
+    if not root.is_dir():
+        raise InvalidPathError(
+            f"Path is not a directory: {root}",
+            f"'{root_path}' is a file, not a directory. Please provide a directory path.",
+        )
+
+    # Check for symlink attacks (circular symlinks)
+    from projectreadmegen.utils import is_symlink_chain
+    if is_symlink_chain(root):
+        raise InvalidPathError(
+            f"Symlink chain or circular reference detected: {root}",
+            f"The path '{root_path}' contains a problematic symlink. Please use a regular directory.",
+        )
+
+    # Check read permissions
+    try:
+        root.iterdir()
+    except PermissionError:
+        raise PermErr(
+            f"Permission denied accessing directory: {root}",
+            f"You don't have permission to read '{root_path}'. Please check the folder permissions.",
+        )
 
     logger.debug(
         f"Scanning directory: {root} (max_depth={max_depth}, use_cache={use_cache})"
@@ -120,15 +167,15 @@ def scan_directory(
             dirnames.clear()
             continue
 
-        dirnames[:] = [
-            d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")
-        ]
+        dirnames[:] = [d for d in dirnames if not _is_skipped_dir(d)]
 
         for filename in filenames:
             if filename.startswith(".") and filename not in [
                 ".gitignore",
                 ".env.example",
             ]:
+                continue
+            if _is_skipped_file(filename):
                 continue
 
             all_files.append(filename)
@@ -199,7 +246,13 @@ def _build_tree(
         return ""
 
     entries = [
-        e for e in entries if not e.name.startswith(".") and e.name not in SKIP_DIRS
+        e
+        for e in entries
+        if (
+            (not e.name.startswith(".") or e.name in [".gitignore", ".env.example"])
+            and (e.is_file() or not _is_skipped_dir(e.name))
+            and (e.is_dir() or not _is_skipped_file(e.name))
+        )
     ]
 
     for i, entry in enumerate(entries):
@@ -230,6 +283,7 @@ def load_config(root_path: str) -> dict:
         dict: Merged configuration (user config overrides defaults).
     """
     from projectreadmegen.config import DEFAULT_CONFIG, logger
+    from projectreadmegen.exceptions import ConfigurationError
 
     config_path = Path(root_path) / "readmegen.config.json"
     config = DEFAULT_CONFIG.copy()
@@ -237,20 +291,47 @@ def load_config(root_path: str) -> dict:
     if config_path.exists():
         logger.debug(f"Loading config from {config_path}")
         try:
+            # Verify readable
+            if not config_path.is_file():
+                logger.warning(f"Config path is not a file: {config_path}")
+                return config
+
             with open(config_path, "r", encoding="utf-8") as f:
                 user_config = json.load(f)
 
+            # Validate config is dict
+            if not isinstance(user_config, dict):
+                raise ConfigurationError(
+                    f"Invalid config format: expected dict, got {type(user_config).__name__}",
+                    "Configuration file must be a valid JSON object.",
+                )
+
+            # Validate and merge
             for key, value in user_config.items():
                 if key in config:
                     config[key] = value
                 else:
-                    logger.warning(f"Unknown config key: {key}")
+                    logger.warning(f"Unknown config key in readmegen.config.json: {key}")
 
             logger.debug(f"Loaded user config: {config}")
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in {config_path}: {e}")
+            raise ConfigurationError(
+                f"Invalid JSON in {config_path}: {e}",
+                "The readmegen.config.json file contains invalid JSON. Please fix the syntax.",
+            )
+        except (IOError, OSError) as e:
+            logger.error(f"Cannot read config file {config_path}: {e}")
+            raise ConfigurationError(
+                f"Cannot read config file {config_path}: {e}",
+                f"Unable to read configuration file: {e}",
+            )
         except Exception as e:
             logger.error(f"Error loading config from {config_path}: {e}")
+            raise ConfigurationError(
+                f"Error loading config from {config_path}: {e}",
+                f"An error occurred while loading configuration: {e}",
+            )
 
     return config
 

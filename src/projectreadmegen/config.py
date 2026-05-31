@@ -1,7 +1,6 @@
 # src/config.py
 
 import logging
-from typing import Any
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -89,11 +88,11 @@ SKIP_DIRS = {
     "vendor",
     "third_party",
     "deps",
+    "*.egg-info",
     "examples",
     "Example",
     "sample",
     "Sample",
-    "web",
 }
 
 SKIP_FILES = {
@@ -155,11 +154,6 @@ PRESETS = {
     },
     "react": {
         "template": "full",
-        "include_badges": True,
-        "include_tree": True,
-    },
-    "flask": {
-        "template": "standard",
         "include_badges": True,
         "include_tree": True,
     },

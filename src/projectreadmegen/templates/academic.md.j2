@@ -18,11 +18,15 @@ This project was created as part of academic coursework. It demonstrates concept
 
 ## Installation & Setup
 
+{% if install_cmd %}
 ```bash
 git clone {{ github_url }}/{{ project_raw_name }}.git
 cd {{ project_raw_name }}
 {{ install_cmd }}
 ```
+{% else %}
+Clone this repository, then follow the setup instructions provided by the coursework or project maintainer.
+{% endif %}
 
 {% if run_cmd %}
 ## How to Run

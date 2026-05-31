@@ -1,4 +1,3 @@
-import os
 import re
 import logging
 from typing import Optional, Dict, List, Tuple
@@ -316,7 +315,7 @@ def build_profile_context(
     """
     context_parts = []
 
-    context_parts.append(f"# GitHub Profile README Generation")
+    context_parts.append("# GitHub Profile README Generation")
     context_parts.append(f"Username: {username}")
     context_parts.append(f"Profile URL: {profile_url}")
     context_parts.append(f"Style: {style}")
@@ -382,7 +381,7 @@ def build_profile_context(
                 context_parts.append(f"   Topics: {', '.join(repo['topics'][:5])}")
             context_parts.append("")
 
-    context_parts.append(f"## README Style Required")
+    context_parts.append("## README Style Required")
     context_parts.append(
         f"Generate a {style} GitHub profile README based on the information above."
     )
@@ -591,7 +590,7 @@ def generate_readme_content(
 
         readme = readme.strip()
 
-        if username in readme and "USERNAME" in readme:
+        if "USERNAME" in readme:
             readme = readme.replace("USERNAME", username)
 
         return readme

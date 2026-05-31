@@ -1,6 +1,5 @@
 # cli.py
 
-import sys
 import os
 import logging
 from pathlib import Path
@@ -13,7 +12,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from projectreadmegen.scanner import scan_directory, load_config
 from projectreadmegen.detector import detect_stack
 from projectreadmegen.generator import generate_readme, save_readme
-from projectreadmegen.config import PRESETS
+from projectreadmegen import __version__
 from projectreadmegen import grok
 from projectreadmegen import usagetracker
 from projectreadmegen import github_profile
@@ -21,94 +20,10 @@ from projectreadmegen import github_profile
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-from projectreadmegen import __version__
-
-# Module-level KNOWN_FILES for tree parsing
-KNOWN_FILES = {
-    "Makefile",
-    "Dockerfile",
-    "CMakeLists.txt",
-    "Gemfile",
-    "Rakefile",
-    "Podfile",
-    "Vagrantfile",
-    "Pipfile",
-    "Procfile",
-    "Containerfile",
-    "GoReleaser",
-    "Jenkinsfile",
-    "LICENSE",
-    "LICENSE.md",
-    "LICENSE.txt",
-    "README",
-    "README.md",
-    "CHANGELOG",
-    "CHANGELOG.md",
-    "CONTRIBUTING",
-    "CONTRIBUTING.md",
-    "SECURITY",
-    "SECURITY.md",
-    "CODE_OF_CONDUCT",
-    "go.mod",
-    "go.sum",
-    "Cargo.toml",
-    "Cargo.lock",
-    "pyproject.toml",
-    "package.json",
-    ".gitignore",
-    ".eslintrc",
-    ".babelrc",
-    ".env.example",
-}
-
-
-def parse_tree_to_scan(tree_text: str) -> dict:
-    """Parse a text-based folder tree into a scan_result dict."""
-    lines = tree_text.strip().splitlines()
-    files = []
-    dirs = []
-    extensions = set()
-
-    project_name = lines[0].strip().rstrip("/") if lines else "my-project"
-
-    for line in lines[1:]:
-        name = (
-            line.replace("|--", "")
-            .replace("`--", "")
-            .replace("|", "")
-            .replace(" ", "")
-            .strip()
-        )
-
-        if not name:
-            continue
-
-        if name in KNOWN_FILES:
-            files.append(name)
-        elif "." in name:
-            files.append(name)
-            ext = "." + name.split(".")[-1].lower()
-            extensions.add(ext)
-        else:
-            dirs.append(name)
-
-    return {
-        "root": "",
-        "name": project_name,
-        "files": files,
-        "dirs": dirs,
-        "tree": "\n".join(lines[1:]),
-        "has_license": any(f in files for f in ["LICENSE", "LICENSE.md", "license"]),
-        "has_contributing": any("contributing" in f.lower() for f in files),
-        "has_gitignore": ".gitignore" in files,
-        "has_existing_readme": any(f.lower() == "readme.md" for f in files),
-        "file_extensions": sorted(list(extensions)),
-    }
-
-
 app = typer.Typer(
     help="projectreadmegen — Auto-generate README files from folder structure.",
     add_completion=False,
+    invoke_without_command=True,
 )
 console = Console()
 
@@ -126,12 +41,15 @@ def print_version():
 
 @app.callback()
 def main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False, "--version", "-V", help="Show version and exit"
     ),
 ):
     if version:
         print_version()
+    if ctx.invoked_subcommand is None:
+        main_menu_loop()
 
 
 def show_main_menu():
@@ -149,16 +67,15 @@ def show_main_menu():
   [green]3[/green]  Manage API Key
   [green]4[/green]  View Credits Status
   [green]5[/green]  Update projectreadmegen
-  [green]6[/green]  Start Web Server
-  [green]7[/green]  Help & Commands
-  [green]8[/green]  Create GitHub Profile README  [NEW]
-  [green]9[/green]  Exit
+  [green]6[/green]  Help & Commands
+  [green]7[/green]  Create GitHub Profile README  [NEW]
+  [green]8[/green]  Exit
         """,
             title="projectreadmegen Menu",
             border_style="cyan",
         )
     )
-    choice = input("\nEnter your choice (1-9): ").strip()
+    choice = input("\nEnter your choice (1-8): ").strip()
     return choice
 
 
@@ -197,7 +114,7 @@ def handle_manage_api():
     has_key = bool(user_key)
 
     if has_key:
-        console.print(f"""
+        console.print("""
 [bold yellow]Current Status:[/bold yellow]
   You have your own API key configured.
 
@@ -208,7 +125,7 @@ def handle_manage_api():
   [green]4[/green]  Go Back
         """)
     else:
-        console.print(f"""
+        console.print("""
 [bold yellow]Current Status:[/bold yellow]
   No API key configured. AI features require an API key.
 
@@ -222,14 +139,17 @@ def handle_manage_api():
 
     if has_key and choice == "1":
         key = input("\nEnter your new Groq API key: ").strip()
-        if key and key.startswith("gsk_"):
+        if not key:
+            console.print("[yellow]No key provided. Cancelled.[/yellow]")
+        elif key.startswith("gsk_") and len(key) > 10:
             os.environ["GROQ_API_KEY"] = key
             data = usagetracker.load_usage_data()
             data["user_key_set"] = True
             usagetracker.save_usage_data(data)
-            console.print("[green]API key updated successfully![/green]")
+            console.print("[green]✓ API key updated successfully![/green]")
         else:
-            console.print("[red]Invalid key format. Key should start with 'gsk_'[/red]")
+            console.print("[red]✗ Invalid key format. Key should start with 'gsk_' and be longer.[/red]")
+            console.print("[dim]Get your key at: https://console.groq.com/keys[/dim]")
         input("\nPress Enter to continue...")
     elif has_key and choice == "2":
         del os.environ["GROQ_API_KEY"]
@@ -241,21 +161,23 @@ def handle_manage_api():
     elif has_key and choice == "3":
         handle_github_token_settings()
     elif not has_key and choice == "1":
-        console.print(f"""
+        console.print("""
 [bold]Get your free API key:[/bold]
 1. Visit: https://console.groq.com/keys
 2. Click "Create Key"
 3. Copy the key and paste below
         """)
         key = input("\nEnter your Groq API key: ").strip()
-        if key and key.startswith("gsk_"):
+        if not key:
+            console.print("[yellow]No key provided. Cancelled.[/yellow]")
+        elif key.startswith("gsk_") and len(key) > 10:
             os.environ["GROQ_API_KEY"] = key
             data = usagetracker.load_usage_data()
             data["user_key_set"] = True
             usagetracker.save_usage_data(data)
-            console.print("[green]API key added successfully![/green]")
+            console.print("[green]✓ API key added successfully![/green]")
         else:
-            console.print("[red]Invalid key format. Key should start with 'gsk_'[/red]")
+            console.print("[red]✗ Invalid key format. Key should start with 'gsk_' and be longer.[/red]")
         input("\nPress Enter to continue...")
     elif not has_key and choice == "2":
         handle_github_token_settings()
@@ -276,7 +198,7 @@ def handle_credits_status():
 
   Groq API Key: {"[green]Configured[/green]" if has_key else "[red]Not configured[/red]"}
   GitHub Token: {"[green]Configured[/green]" if has_github_token else "[dim]Not configured[/dim]"}
-  
+
   {msg}
 
 [bold]Details:[/bold]
@@ -287,7 +209,7 @@ def handle_credits_status():
 
 
 def handle_help():
-    console.print(f"""
+    console.print("""
 [bold cyan]Help & Commands[/bold cyan]
 
 [bold yellow]Quick Commands:[/bold yellow]
@@ -339,7 +261,7 @@ def handle_github_token_settings():
 [bold yellow]What is a GitHub Token?[/bold yellow]
   A GitHub token helps us fetch more detailed information
   about your profile for creating better GitHub Profile READMEs.
-  
+
   Benefits:
   - Access all your repositories
   - See programming language statistics
@@ -453,13 +375,13 @@ Create a professional README for your GitHub profile!
 
   [green]1[/green]  Basic README
       Clean, simple, and professional
-      
+
   [green]2[/green]  Professional README
       Career-focused with detailed sections
-      
+
   [green]3[/green]  Stylish with Badges
       Visually impressive with stats cards
-      
+
   [green]4[/green]  Unique & Creative
       Most detailed and eye-catching
     """)
@@ -548,7 +470,7 @@ for a more personalized README. This is recommended but optional.
     if languages:
         top_langs = list(languages.items())[:5]
         console.print(
-            f"[green]Top languages: {', '.join([l[0] for l in top_langs])}[/green]\n"
+            f"[green]Top languages: {', '.join([lang[0] for lang in top_langs])}[/green]\n"
         )
 
     console.print(f"[bold cyan]Generating {style} README...[/bold cyan]\n")
@@ -726,107 +648,46 @@ def handle_update():
     input("Press Enter to continue...")
 
 
-def handle_start_web():
-    console.print("""
-[bold cyan]Web Server Options[/bold cyan]
-
-[bold]Start web interface to generate README files visually.[/bold]
-
-[bold yellow]Options:[/bold yellow]
-  [green]1[/green]  Start Web Server (default: http://127.0.0.1:5000)
-  [green]2[/green]  Go Back
-    """)
-
-    choice = input("\nEnter choice (1/2): ").strip()
-
-    if choice == "1":
-        console.print("\n[bold cyan]Starting Web Server...[/bold cyan]")
-        console.print("[dim]Press Ctrl+C to stop the server[/dim]\n")
-
-        from flask import Flask, render_template, request, jsonify
-        from projectreadmegen.scanner import scan_directory, load_config
-        from projectreadmegen.detector import detect_stack
-        from projectreadmegen.generator import generate_readme
-        from pathlib import Path
-        import threading
-        import webbrowser
-
-        web_dir = Path(__file__).parent.parent.parent / "web"
-        flask_app = Flask(
-            __name__,
-            template_folder=str(web_dir / "templates"),
-            static_folder=str(web_dir / "static"),
-        )
-
-        @flask_app.route("/")
-        def index():
-            return render_template("index.html")
-
-        @flask_app.route("/generate", methods=["POST"])
-        def generate():
-            data = request.get_json()
-            tree_txt = data.get("tree", "").strip()
-            template = data.get("template", "standard")
-            author = data.get("author", "")
-            username = data.get("github_username", "")
-
-            if not tree_txt:
-                return jsonify({"error": "No folder tree provided."}), 400
-
-            scan_result = parse_tree_to_scan(tree_txt)
-
-            config = {
-                "template": template,
-                "include_badges": True,
-                "include_tree": True,
-                "max_tree_depth": 3,
-                "output_file": "README.md",
-                "author": author,
-                "github_username": username,
-            }
-
-            detection = detect_stack(scan_result)
-            readme = generate_readme(scan_result, detection, config)
-
-            return jsonify(
-                {
-                    "readme": readme,
-                    "language": detection["primary_lang"],
-                    "type": detection["project_type"],
-                    "license": detection["license"],
-                }
-            )
-
-        console.print(f"[green]Server running at: http://127.0.0.1:5000[/green]")
-
-        threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
-
-        try:
-            flask_app.run(host="127.0.0.1", port=5000, debug=False)
-        except KeyboardInterrupt:
-            console.print("\n[cyan]Web server stopped.[/cyan]")
-    elif choice == "2":
-        return
-    else:
-        console.print("\n[red]Invalid choice.[/red]")
-        input("\nPress Enter to continue...")
-
-
 def handle_generate_mode(ai=False, path="."):
     try:
         root = Path(path).resolve()
+
+        # Validate path
         if not root.exists():
-            console.print(f"[red]Error: Path '{path}' does not exist.[/red]")
+            console.print(f"[red]✗ Error: Path '{path}' does not exist.[/red]")
+            console.print("[dim]  Please check the path and try again.[/dim]")
             input("\nPress Enter to continue...")
             return
 
         if not root.is_dir():
-            console.print(f"[red]Error: '{path}' is not a directory.[/red]")
+            console.print(f"[red]✗ Error: '{path}' is not a directory.[/red]")
+            console.print("[dim]  Please provide a directory path, not a file.[/dim]")
             input("\nPress Enter to continue...")
             return
 
-        config = load_config(str(root))
+        # Try to read directory
+        try:
+            list(root.iterdir())
+        except PermissionError:
+            console.print(f"[red]✗ Error: No permission to access '{path}'.[/red]")
+            console.print("[dim]  Please check folder permissions.[/dim]")
+            input("\nPress Enter to continue...")
+            return
 
+        # Load configuration
+        try:
+            config = load_config(str(root))
+        except Exception as e:
+            from projectreadmegen.exceptions import ProjectReadmeGenException
+            if isinstance(e, ProjectReadmeGenException):
+                console.print("[red]✗ Configuration Error:[/red]")
+                console.print(f"[yellow]  {e.user_message}[/yellow]")
+            else:
+                console.print(f"[red]✗ Configuration Error: {e}[/red]")
+            input("\nPress Enter to continue...")
+            return
+
+        # Check API key if needed
         if ai:
             if not usagetracker.check_api_key():
                 can_continue = usagetracker.require_api_key()
@@ -839,37 +700,83 @@ def handle_generate_mode(ai=False, path="."):
             transient=True,
             console=console,
         ) as progress:
-            task = progress.add_task("Scanning project...", total=None)
-            scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-
-            progress.update(task, description="Detecting stack...")
-            detection = detect_stack(scan)
-
-            if ai:
-                progress.update(task, description="Generating README with AI...")
+            try:
+                # Scan project
+                task = progress.add_task("Scanning project...", total=None)
                 try:
-                    readme = grok.generate_ai_readme(scan, detection, config)
-                    console.print("[green]AI generation successful![/green]")
-                except Exception:
-                    progress.update(
-                        task, description="AI unavailable, falling back to template..."
-                    )
-                    console.print(
-                        "[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]"
-                    )
-                    readme = generate_readme(scan, detection, config)
-            else:
-                progress.update(task, description="Generating README...")
-                readme = generate_readme(scan, detection, config)
+                    scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+                except Exception as e:
+                    from projectreadmegen.exceptions import ProjectReadmeGenException
+                    if isinstance(e, ProjectReadmeGenException):
+                        console.print(f"[red]✗ Scan Error: {e.user_message}[/red]")
+                    else:
+                        console.print(f"[red]✗ Failed to scan directory: {e}[/red]")
+                    input("\nPress Enter to continue...")
+                    return
 
-        output_path = root / config["output_file"]
-        save_readme(readme, str(output_path))
+                # Detect stack
+                progress.update(task, description="Detecting stack...")
+                detection = detect_stack(scan)
+
+                # Generate README
+                if ai:
+                    progress.update(task, description="Generating README with AI...")
+                    try:
+                        readme = grok.generate_ai_readme(scan, detection, config)
+                        console.print("[green]✓ AI generation successful![/green]")
+                    except Exception as ai_error:
+                        from projectreadmegen.exceptions import APIError as CustomAPIError
+                        if isinstance(ai_error, CustomAPIError):
+                            progress.stop()
+                            console.print(f"[yellow]⚠ {ai_error.user_message}[/yellow]")
+                            console.print("[dim]Falling back to template-based generation...[/dim]")
+                        else:
+                            logger.error(f"AI generation error: {ai_error}")
+                            progress.stop()
+                            console.print(
+                                "[yellow]⚠ AI generation unavailable. Falling back to template-based generation.[/yellow]"
+                            )
+                        readme = generate_readme(scan, detection, config)
+                        progress = Progress(
+                            SpinnerColumn(),
+                            TextColumn("[progress.description]{task.description}"),
+                            transient=True,
+                            console=console,
+                        )
+                        progress.start()
+                        task = progress.add_task("Finishing...", total=None)
+                else:
+                    progress.update(task, description="Generating README...")
+                    readme = generate_readme(scan, detection, config)
+
+                # Save README
+                progress.update(task, description="Saving README...")
+                try:
+                    output_path = root / config["output_file"]
+                    save_readme(readme, str(output_path))
+                except Exception as save_error:
+                    from projectreadmegen.exceptions import ProjectReadmeGenException
+                    progress.stop()
+                    if isinstance(save_error, ProjectReadmeGenException):
+                        console.print(f"[red]✗ Save Error: {save_error.user_message}[/red]")
+                    else:
+                        console.print(f"[red]✗ Failed to save README: {save_error}[/red]")
+                    input("\nPress Enter to continue...")
+                    return
+
+                progress.stop()
+
+            except Exception as e:
+                console.print(f"[red]✗ Unexpected error: {e}[/red]")
+                logger.error(f"Unexpected error in generate mode: {e}", exc_info=True)
+                input("\nPress Enter to continue...")
+                return
 
         credits_msg = usagetracker.get_remaining_credits()
 
         console.print(
             Panel(
-                f"[green]README generated![/green]\n\n"
+                f"[green]✓ README generated successfully![/green]\n\n"
                 f"  Project  : [bold]{scan['name']}[/bold]\n"
                 f"  Language : [bold]{detection['primary_lang']}[/bold]\n"
                 f"  Type     : [bold]{detection['project_type']}[/bold]\n"
@@ -881,21 +788,44 @@ def handle_generate_mode(ai=False, path="."):
             )
         )
 
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Cancelled by user.[/yellow]")
     except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
+        logger.error(f"Unexpected error in handle_generate_mode: {e}", exc_info=True)
+        console.print(f"[red]✗ Error: {e}[/red]")
 
     input("\nPress Enter to continue...")
+
 
 
 def handle_interactive_mode(ai=False, path="."):
     try:
         root = Path(path).resolve()
+
+        # Validate path
         if not root.exists():
-            console.print(f"[red]Error: Path '{path}' does not exist.[/red]")
+            console.print(f"[red]✗ Error: Path '{path}' does not exist.[/red]")
+            console.print("[dim]  Please check the path and try again.[/dim]")
             input("\nPress Enter to continue...")
             return
 
-        config = load_config(str(root))
+        if not root.is_dir():
+            console.print(f"[red]✗ Error: '{path}' is not a directory.[/red]")
+            input("\nPress Enter to continue...")
+            return
+
+        # Load configuration
+        try:
+            config = load_config(str(root))
+        except Exception as e:
+            from projectreadmegen.exceptions import ProjectReadmeGenException
+            if isinstance(e, ProjectReadmeGenException):
+                console.print("[red]✗ Configuration Error:[/red]")
+                console.print(f"[yellow]  {e.user_message}[/yellow]")
+            else:
+                console.print(f"[red]✗ Configuration Error: {e}[/red]")
+            input("\nPress Enter to continue...")
+            return
 
         if ai:
             if not usagetracker.check_api_key():
@@ -904,40 +834,86 @@ def handle_interactive_mode(ai=False, path="."):
                     return
 
             console.print("\n[yellow]Generating AI-powered README...[/yellow]")
-            scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-            detection = detect_stack(scan)
             try:
+                scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+                detection = detect_stack(scan)
                 readme = grok.generate_ai_readme(scan, detection, config)
-            except Exception:
-                console.print(
-                    "[yellow]AI generation unavailable. Falling back to template-based generation.[/yellow]"
-                )
+            except Exception as ai_error:
+                from projectreadmegen.exceptions import ProjectReadmeGenException
+                if isinstance(ai_error, ProjectReadmeGenException):
+                    console.print(f"[yellow]⚠ {ai_error.user_message}[/yellow]")
+                else:
+                    logger.error(f"AI generation error: {ai_error}")
+                    console.print(f"[yellow]⚠ AI generation unavailable. {str(ai_error)[:100]}[/yellow]")
+                console.print("[dim]Falling back to template-based generation...[/dim]")
+                scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+                detection = detect_stack(scan)
                 readme = generate_readme(scan, detection, config)
         else:
             console.print("\n[bold cyan]Interactive Mode[/bold cyan]\n")
-            config["author"] = input("Your name: ").strip()
-            config["github_username"] = input("Your GitHub username: ").strip()
-            config["template"] = (
+
+            # Collect user input with validation
+            author = input("Your name (optional): ").strip()
+            if author:
+                config["author"] = author
+
+            github_user = input("Your GitHub username (optional): ").strip()
+            if github_user:
+                if len(github_user) < 1 or len(github_user) > 39:
+                    console.print("[yellow]⚠ GitHub username should be 1-39 characters. Skipping.[/yellow]")
+                else:
+                    config["github_username"] = github_user
+
+            template = (
                 input(
                     "Template [minimal/standard/full/academic] (default: standard): "
                 ).strip()
                 or "standard"
-            )
+            ).lower()
+
+            # Validate template
+            valid_templates = ["minimal", "standard", "full", "academic"]
+            if template not in valid_templates:
+                console.print(f"[yellow]⚠ Unknown template '{template}'. Using 'standard'.[/yellow]")
+                template = "standard"
+            config["template"] = template
+
             include_tree = input("Include folder tree? [Y/n]: ").strip().lower()
             config["include_tree"] = include_tree != "n"
 
-            scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-            detection = detect_stack(scan)
-            readme = generate_readme(scan, detection, config)
+            # Scan and generate
+            try:
+                scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+                detection = detect_stack(scan)
+                readme = generate_readme(scan, detection, config)
+            except Exception as gen_error:
+                from projectreadmegen.exceptions import ProjectReadmeGenException
+                if isinstance(gen_error, ProjectReadmeGenException):
+                    console.print(f"[red]✗ Generation Error: {gen_error.user_message}[/red]")
+                else:
+                    console.print(f"[red]✗ Failed to generate README: {gen_error}[/red]")
+                    logger.error(f"Generation error: {gen_error}", exc_info=True)
+                input("\nPress Enter to continue...")
+                return
 
-        output_path = root / config["output_file"]
-        save_readme(readme, str(output_path))
+        # Save the README
+        try:
+            output_path = root / config["output_file"]
+            save_readme(readme, str(output_path))
+        except Exception as save_error:
+            from projectreadmegen.exceptions import ProjectReadmeGenException
+            if isinstance(save_error, ProjectReadmeGenException):
+                console.print(f"[red]✗ Save Error: {save_error.user_message}[/red]")
+            else:
+                console.print(f"[red]✗ Failed to save README: {save_error}[/red]")
+            input("\nPress Enter to continue...")
+            return
 
         credits_msg = usagetracker.get_remaining_credits()
 
         console.print(
             Panel(
-                f"[green]README generated![/green]\n\n"
+                f"[green]✓ README generated successfully![/green]\n\n"
                 f"  Project  : [bold]{scan['name']}[/bold]\n"
                 f"  Mode     : [bold]Interactive {'(AI)' if ai else '(Template)'}[/bold]\n"
                 f"  Saved to : [bold]{output_path}[/bold]\n\n"
@@ -947,8 +923,11 @@ def handle_interactive_mode(ai=False, path="."):
             )
         )
 
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Cancelled by user.[/yellow]")
     except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
+        logger.error(f"Unexpected error in interactive mode: {e}", exc_info=True)
+        console.print(f"[red]✗ Error: {e}[/red]")
 
     input("\nPress Enter to continue...")
 
@@ -969,12 +948,10 @@ def main_menu_loop():
             elif choice == "5":
                 handle_update()
             elif choice == "6":
-                handle_start_web()
-            elif choice == "7":
                 handle_help()
-            elif choice == "8":
+            elif choice == "7":
                 handle_github_profile()
-            elif choice == "9":
+            elif choice == "8":
                 console.print("\n[cyan]Thank you for using projectreadmegen![/cyan]\n")
                 break
             else:
@@ -1048,26 +1025,50 @@ def generate(
         False, "--auto-ai", help="Auto-detect and use AI when API key is available"
     ),
 ):
+    from projectreadmegen.exceptions import ProjectReadmeGenException
+
     console = Console()
     root = Path(path).resolve()
 
+    # Validate path
     if not root.exists():
-        console.print(f"[red]Error: Path '{path}' does not exist.[/red]")
+        console.print(f"[red]✗ Error: Path '{path}' does not exist.[/red]")
         raise typer.Exit(code=1)
 
     if not root.is_dir():
-        console.print(f"[red]Error:[/red] '{path}' is not a directory.")
+        console.print(f"[red]✗ Error: '{path}' is not a directory.[/red]")
         raise typer.Exit(code=1)
 
-    config = load_config(str(root))
+    # Load config
+    try:
+        config = load_config(str(root))
+    except ProjectReadmeGenException as e:
+        console.print("[red]✗ Configuration Error:[/red]")
+        console.print(f"[yellow]{e.user_message}[/yellow]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"[red]✗ Failed to load configuration: {e}[/red]")
+        raise typer.Exit(code=1)
 
     if not template:
         template = usagetracker.get_project_last_template(str(root))
 
     if template:
-        config["template"] = template
+        # Validate template
+        valid_templates = ["minimal", "standard", "full", "academic"]
+        if template.lower() in valid_templates:
+            config["template"] = template.lower()
+        else:
+            console.print(f"[yellow]⚠ Unknown template '{template}'. Using 'standard'.[/yellow]")
+            config["template"] = "standard"
+
     if no_badges:
         config["include_badges"] = False
+
+    # Validate depth
+    if depth < 1 or depth > 10:
+        console.print("[yellow]⚠ Tree depth must be 1-10. Using default of 3.[/yellow]")
+        depth = 3
     config["max_tree_depth"] = depth
 
     if ai:
@@ -1090,7 +1091,7 @@ def generate(
 
             if current_mtime > last_gen_time:
                 console.print(
-                    f"[yellow]Warning: README.md has been modified since last generation.[/yellow]"
+                    "[yellow]Warning: README.md has been modified since last generation.[/yellow]"
                 )
                 console.print(
                     "[dim]Use --force to overwrite or regenerate manually.[/dim]"
@@ -1109,39 +1110,84 @@ def generate(
         transient=True,
         console=console,
     ) as progress:
-        task = progress.add_task("Scanning project...", total=None)
-        scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-
-        progress.update(task, description="Detecting stack...")
-        detection = detect_stack(scan)
-
-        if use_ai:
-            allowed, message = usagetracker.check_free_limit()
-
-            if not allowed:
-                can_continue = usagetracker.handle_exhausted()
-                if not can_continue:
-                    raise typer.Exit(code=1)
-
-            if "Free use" in message:
-                console.print(f"[yellow]{message}[/yellow]")
-
-            progress.update(task, description="Generating README with Grok AI...")
+        try:
+            task = progress.add_task("Scanning project...", total=None)
             try:
-                readme = grok.generate_ai_readme(scan, detection, config)
+                scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+            except ProjectReadmeGenException as e:
+                console.print(f"[red]✗ Scan Error: {e.user_message}[/red]")
+                raise typer.Exit(code=1)
             except Exception as e:
-                console.print(
-                    f"[yellow]AI generation failed: {e}, falling back to template[/yellow]"
-                )
+                console.print(f"[red]✗ Failed to scan project: {e}[/red]")
+                logger.error(f"Scan error: {e}", exc_info=True)
+                raise typer.Exit(code=1)
+
+            progress.update(task, description="Detecting stack...")
+            detection = detect_stack(scan)
+
+            if use_ai:
+                allowed, message = usagetracker.check_free_limit()
+
+                if not allowed:
+                    can_continue = usagetracker.handle_exhausted()
+                    if not can_continue:
+                        raise typer.Exit(code=1)
+
+                if "Free use" in message:
+                    console.print(f"[yellow]{message}[/yellow]")
+
+                progress.update(task, description="Generating README with Grok AI...")
+                try:
+                    readme = grok.generate_ai_readme(scan, detection, config)
+                except ProjectReadmeGenException as ai_e:
+                    progress.stop()
+                    console.print(f"[yellow]⚠ {ai_e.user_message}[/yellow]")
+                    console.print("[dim]Falling back to template-based generation...[/dim]")
+                    readme = generate_readme(scan, detection, config)
+                    progress = Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        transient=True,
+                        console=console,
+                    )
+                    progress.start()
+                    task = progress.add_task("Finishing...", total=None)
+                except Exception as ai_e:
+                    logger.error(f"AI generation error: {ai_e}", exc_info=True)
+                    progress.stop()
+                    console.print("[yellow]⚠ AI generation failed, falling back to template[/yellow]")
+                    readme = generate_readme(scan, detection, config)
+                    progress = Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        transient=True,
+                        console=console,
+                    )
+                    progress.start()
+                    task = progress.add_task("Finishing...", total=None)
+            else:
+                progress.update(task, description="Generating README...")
                 readme = generate_readme(scan, detection, config)
-        else:
-            progress.update(task, description="Generating README...")
-            readme = generate_readme(scan, detection, config)
+
+        except typer.Exit:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during generation: {e}", exc_info=True)
+            console.print(f"[red]✗ Unexpected error: {e}[/red]")
+            raise typer.Exit(code=1)
 
     if dry_run:
         console.print(Panel(readme, title="[cyan]README Preview[/cyan]", expand=False))
     else:
-        save_readme(readme, str(output_path))
+        try:
+            save_readme(readme, str(output_path))
+        except ProjectReadmeGenException as e:
+            console.print(f"[red]✗ Save Error: {e.user_message}[/red]")
+            raise typer.Exit(code=1)
+        except Exception as e:
+            console.print(f"[red]✗ Failed to save README: {e}[/red]")
+            logger.error(f"Save error: {e}", exc_info=True)
+            raise typer.Exit(code=1)
 
         usagetracker.save_project_cache(
             str(root), {"template": config.get("template", "standard")}
@@ -1152,7 +1198,7 @@ def generate(
 
         console.print(
             Panel(
-                f"[green]README generated![/green]\n\n"
+                f"[green]✓ README generated successfully![/green]\n\n"
                 f"  Project  : [bold]{scan['name']}[/bold]\n"
                 f"  Language : [bold]{detection['primary_lang']}[/bold]\n"
                 f"  Type     : [bold]{detection['project_type']}[/bold]\n"
@@ -1173,48 +1219,111 @@ def interactive(
     ),
 ):
     """Interactive mode — answer questions to customize your README."""
+    from projectreadmegen.exceptions import ProjectReadmeGenException
+
     console = Console()
     console.print("[bold cyan]projectreadmegen — Interactive Mode[/bold cyan]\n")
 
     root = Path(path).resolve()
-    config = load_config(str(root))
+
+    # Validate path
+    if not root.exists():
+        console.print(f"[red]✗ Error: Path '{path}' does not exist.[/red]")
+        raise typer.Exit(code=1)
+
+    if not root.is_dir():
+        console.print(f"[red]✗ Error: '{path}' is not a directory.[/red]")
+        raise typer.Exit(code=1)
+
+    # Load configuration
+    try:
+        config = load_config(str(root))
+    except ProjectReadmeGenException as e:
+        console.print(f"[red]✗ Configuration Error: {e.user_message}[/red]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"[red]✗ Failed to load configuration: {e}[/red]")
+        raise typer.Exit(code=1)
 
     if ai:
         if not usagetracker.check_api_key():
             console.print("[yellow]API key required for AI features.[/yellow]")
             usagetracker.require_api_key()
 
-        console.print("[yellow]Using AI to generate README...[/yellow]")
-        scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-        detection = detect_stack(scan)
         try:
+            console.print("[yellow]Using AI to generate README...[/yellow]")
+            scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+            detection = detect_stack(scan)
             readme = grok.generate_ai_readme(scan, detection, config)
-        except Exception:
-            console.print(
-                "[yellow]AI generation unavailable. Falling back to template.[/yellow]"
-            )
-            readme = generate_readme(scan, detection, config)
+        except ProjectReadmeGenException as e:
+            console.print(f"[yellow]⚠ {e.user_message}[/yellow]")
+            console.print("[dim]Falling back to template-based generation...[/dim]")
+            try:
+                scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+                detection = detect_stack(scan)
+                readme = generate_readme(scan, detection, config)
+            except Exception as fallback_e:
+                console.print(f"[red]✗ Failed to generate README: {fallback_e}[/red]")
+                logger.error(f"Fallback generation error: {fallback_e}", exc_info=True)
+                raise typer.Exit(code=1)
+        except Exception as ai_e:
+            logger.error(f"AI generation error: {ai_e}", exc_info=True)
+            console.print("[yellow]⚠ AI generation unavailable. Falling back to template.[/yellow]")
+            try:
+                scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+                detection = detect_stack(scan)
+                readme = generate_readme(scan, detection, config)
+            except Exception as fallback_e:
+                console.print(f"[red]✗ Failed to generate README: {fallback_e}[/red]")
+                logger.error(f"Fallback generation error: {fallback_e}", exc_info=True)
+                raise typer.Exit(code=1)
     else:
-        config["author"] = typer.prompt("Your name")
-        config["github_username"] = typer.prompt("Your GitHub username")
-        config["template"] = typer.prompt(
-            "Template [minimal/standard/full/academic]", default="standard"
-        )
-        include_tree = typer.confirm("Include folder tree in README?", default=True)
-        config["include_tree"] = include_tree
+        try:
+            config["author"] = typer.prompt("Your name (optional)", default="")
+            config["github_username"] = typer.prompt("Your GitHub username (optional)", default="")
 
-        scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
-        detection = detect_stack(scan)
-        readme = generate_readme(scan, detection, config)
+            template = typer.prompt(
+                "Template [minimal/standard/full/academic]", default="standard"
+            ).lower()
 
-    output_path = root / config["output_file"]
-    save_readme(readme, str(output_path))
+            # Validate template
+            valid_templates = ["minimal", "standard", "full", "academic"]
+            if template not in valid_templates:
+                console.print(f"[yellow]⚠ Unknown template '{template}'. Using 'standard'.[/yellow]")
+                template = "standard"
+            config["template"] = template
+
+            include_tree = typer.confirm("Include folder tree in README?", default=True)
+            config["include_tree"] = include_tree
+
+            scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
+            detection = detect_stack(scan)
+            readme = generate_readme(scan, detection, config)
+        except ProjectReadmeGenException as e:
+            console.print(f"[red]✗ Generation Error: {e.user_message}[/red]")
+            raise typer.Exit(code=1)
+        except Exception as e:
+            console.print(f"[red]✗ Failed to generate README: {e}[/red]")
+            logger.error(f"Generation error: {e}", exc_info=True)
+            raise typer.Exit(code=1)
+
+    # Save README
+    try:
+        output_path = root / config["output_file"]
+        save_readme(readme, str(output_path))
+    except ProjectReadmeGenException as e:
+        console.print(f"[red]✗ Save Error: {e.user_message}[/red]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"[red]✗ Failed to save README: {e}[/red]")
+        logger.error(f"Save error: {e}", exc_info=True)
+        raise typer.Exit(code=1)
 
     credits_msg = usagetracker.get_remaining_credits()
 
     console.print(
         Panel(
-            f"[green]README generated![/green]\n\n"
+            f"[green]✓ README generated successfully![/green]\n\n"
             f"  Project  : [bold]{scan['name']}[/bold]\n"
             f"  Mode     : [bold]Interactive {'(AI)' if ai else '(Template)'}[/bold]\n"
             f"  Saved to : [bold]{output_path}[/bold]\n\n"
@@ -1223,68 +1332,6 @@ def interactive(
             border_style="green",
         )
     )
-
-
-@app.command()
-def web(
-    port: int = typer.Option(5000, "--port", "-p", help="Port to run the web server"),
-    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind to"),
-):
-    """Start the web interface."""
-    from flask import Flask, render_template, request, jsonify
-    from projectreadmegen.scanner import scan_directory, load_config
-    from projectreadmegen.detector import detect_stack
-    from projectreadmegen.generator import generate_readme
-    from pathlib import Path
-
-    web_dir = Path(__file__).parent.parent.parent / "web"
-    flask_app = Flask(
-        __name__,
-        template_folder=str(web_dir / "templates"),
-        static_folder=str(web_dir / "static"),
-    )
-
-    @flask_app.route("/")
-    def web_index():
-        return render_template("index.html")
-
-    @flask_app.route("/generate", methods=["POST"])
-    def web_generate():
-        data = request.get_json()
-        tree_txt = data.get("tree", "").strip()
-        template = data.get("template", "standard")
-        author = data.get("author", "")
-        username = data.get("github_username", "")
-
-        if not tree_txt:
-            return jsonify({"error": "No folder tree provided."}), 400
-
-        scan_result = parse_tree_to_scan(tree_txt)
-
-        config = {
-            "template": template,
-            "include_badges": True,
-            "include_tree": True,
-            "max_tree_depth": 3,
-            "output_file": "README.md",
-            "author": author,
-            "github_username": username,
-        }
-
-        detection = detect_stack(scan_result)
-        readme = generate_readme(scan_result, detection, config)
-
-        return jsonify(
-            {
-                "readme": readme,
-                "language": detection["primary_lang"],
-                "type": detection["project_type"],
-                "license": detection["license"],
-            }
-        )
-
-    console.print(f"[green]Starting web interface at http://{host}:{port}[/green]")
-    flask_app.run(host=host, port=port, debug=False)
 
 
 if __name__ == "__main__":

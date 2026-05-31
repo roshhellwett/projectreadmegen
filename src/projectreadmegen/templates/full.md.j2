@@ -39,7 +39,7 @@
 ## Features
 
 {% if project_type == "web-app" %}
-- Responsive web interface with modern UI
+- Responsive application interface with modern UI
 - RESTful API architecture
 - Secure authentication system
 - Database-backed data management
@@ -87,6 +87,7 @@
 
 **Prerequisites:** {{ primary_lang }}
 
+{% if install_cmd %}
 ```bash
 # 1. Clone the repository
 git clone {{ github_url }}/{{ project_raw_name }}.git
@@ -97,6 +98,9 @@ cd {{ project_raw_name }}
 # 3. Install dependencies
 {{ install_cmd }}
 ```
+{% else %}
+Clone this repository, then follow the setup instructions for the detected project stack.
+{% endif %}
 
 {% if run_cmd %}
 ## Usage

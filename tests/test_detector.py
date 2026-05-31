@@ -82,6 +82,34 @@ class TestDetector:
         result = detect_stack(scan_result)
         
         assert result["project_type"] == "web-app"
+
+    def test_detect_vite_config_as_web_app(self):
+        """Test modern config filenames with extensions."""
+        scan_result = {
+            "files": ["vite.config.ts", "package.json", "index.html"],
+            "dirs": ["src"],
+            "file_extensions": [".ts", ".json", ".html"],
+            "name": "vite-app",
+            "root": "/path/to/project"
+        }
+
+        result = detect_stack(scan_result)
+
+        assert result["project_type"] == "web-app"
+
+    def test_prefers_package_manager_lockfile(self):
+        """Lockfiles should decide package manager commands."""
+        scan_result = {
+            "files": ["package.json", "pnpm-lock.yaml"],
+            "dirs": ["src"],
+            "file_extensions": [".json", ".yaml"],
+            "name": "pnpm-app",
+            "root": "/path/to/project"
+        }
+
+        result = detect_stack(scan_result)
+
+        assert result["install_cmd"] == "pnpm install"
     
     def test_detect_cli_tool(self):
         """Test detection of CLI tool."""
@@ -128,4 +156,3 @@ class TestDetector:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-    

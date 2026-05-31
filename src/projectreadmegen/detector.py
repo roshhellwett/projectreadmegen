@@ -61,6 +61,7 @@ def detect_stack(scan_result: dict) -> dict:
 def _detect_languages(files: list, extensions: list) -> list:
     """Detect languages from files and extensions, sorted by confidence."""
     scores = {}
+    file_set = set(files)
 
     for lang, patterns in LANG_PATTERNS.items():
         score = 0
@@ -70,13 +71,13 @@ def _detect_languages(files: list, extensions: list) -> list:
                 if ext in extensions:
                     score += 2
             else:
-                if pattern in files:
+                if pattern in file_set:
                     score += 5
 
         if score > 0:
             scores[lang] = score
 
-    return sorted(scores.keys(), key=lambda l: scores[l], reverse=True)
+    return sorted(scores.keys(), key=lambda lang: scores[lang], reverse=True)
 
 
 def _detect_license(files: list, root: str) -> str:
@@ -125,33 +126,25 @@ def _detect_project_type(
 ) -> str:
     """Classify project type based on files, dirs, languages, and extensions."""
     name_lower = name.lower()
+    file_set = set(files)
+    lower_files = {f.lower() for f in files}
 
     # API / web framework
-    web_frameworks = {
-        "Django",
-        "Flask",
-        "FastAPI",
-        "React",
-        "Next",
-        "Angular",
-        "Vue",
-        "Express",
-    }
-    if any(f in files for f in ["app.py", "manage.py", "wsgi.py", "asgi.py"]):
+    if any(f in file_set for f in ["app.py", "manage.py", "wsgi.py", "asgi.py"]):
         return "web-app"
-    if any(f in files for f in ["package.json", "index.html", "tsconfig.json"]):
+    if any(f in file_set for f in ["package.json", "index.html", "tsconfig.json"]):
         if any(d in dirs for d in ["src", "public", "pages", "components", "app"]):
             return "web-app"
     if any(
-        f in files
-        for f in ["vite.config", "next.config", "nuxt.config", "tailwind.config"]
+        f.startswith(("vite.config.", "next.config.", "nuxt.config.", "tailwind.config."))
+        for f in lower_files
     ):
         return "web-app"
-    if "webpack.config.js" in files or "next.config.js" in files:
+    if "webpack.config.js" in file_set or "next.config.js" in file_set:
         return "web-app"
 
     # Bot
-    if any(f in files for f in ["bot.py", "telegram_bot.py"]) and "Python" in languages:
+    if any(f in file_set for f in ["bot.py", "telegram_bot.py"]) and "Python" in languages:
         return "telegram-bot"
 
     # Library
@@ -172,7 +165,7 @@ def _detect_project_type(
         "setup.py",
         "setup.cfg",
     }
-    if cli_files & set(files):
+    if cli_files & file_set:
         if "Python" in languages or "C++" in languages or "Rust" in languages:
             return "cli-tool"
 
@@ -205,7 +198,7 @@ def _build_description_hint(name: str, lang: str, proj_type: str) -> str:
         "web-app": f"A web application built with {lang}",
         "cli-tool": f"A command-line tool written in {lang}",
         "game": f"An interactive game written in {lang}",
-        "script": f"A collection of automation scripts",
+        "script": "A collection of automation scripts",
         "library": f"A {lang} library",
         "unknown": f"A {lang} project",
     }
@@ -216,6 +209,8 @@ def _build_description_hint(name: str, lang: str, proj_type: str) -> str:
 
 def _detect_install_command(files: list, primary_lang: str) -> str:
     """Return the most likely install command based on detected stack."""
+    file_set = set(files)
+
     if "pyproject.toml" in files or "setup.py" in files:
         return "pip install ."
     if "requirements.txt" in files:
@@ -224,12 +219,12 @@ def _detect_install_command(files: list, primary_lang: str) -> str:
         return "pipenv install"
     if "poetry.lock" in files:
         return "poetry install"
-    if "package-lock.json" in files or "package.json" in files:
-        return "npm install"
     if "pnpm-lock.yaml" in files:
         return "pnpm install"
     if "yarn.lock" in files:
         return "yarn install"
+    if "package-lock.json" in files or "package.json" in files:
+        return "npm install"
     if "Cargo.toml" in files:
         return "cargo build --release"
     if "CMakeLists.txt" in files:
@@ -238,8 +233,8 @@ def _detect_install_command(files: list, primary_lang: str) -> str:
         return "make"
     if "go.mod" in files:
         return "go mod download"
-    if "build.gradle" in files or "build.gradle.kts" in files:
-        return "gradle build"
+    if file_set & {"build.gradle", "build.gradle.kts", "gradlew"}:
+        return "./gradlew build" if "gradlew" in file_set else "gradle build"
     if "pom.xml" in files:
         return "mvn install"
 

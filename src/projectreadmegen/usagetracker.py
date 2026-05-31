@@ -6,7 +6,8 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-USAGE_FILE = "+projectreadmegen_usage.json"
+USAGE_FILE = "projectreadmegen_usage.json"
+LEGACY_USAGE_FILE = "+projectreadmegen_usage.json"
 DEFAULT_API_KEY = None
 
 GROQ_KEY_INFO = """
@@ -49,7 +50,8 @@ This is optional but recommended for best results.
 ================================================================
 """
 
-CACHE_FILE = "+projectreadmegen_cache.json"
+CACHE_FILE = "projectreadmegen_cache.json"
+LEGACY_CACHE_FILE = "+projectreadmegen_cache.json"
 
 
 def get_usage_file_path():
@@ -60,6 +62,14 @@ def get_usage_file_path():
     return Path.home() / USAGE_FILE
 
 
+def get_legacy_usage_file_path():
+    if os.name == "nt":
+        appdata = os.environ.get("APPDATA")
+        if appdata:
+            return Path(appdata) / "projectreadmegen" / LEGACY_USAGE_FILE
+    return Path.home() / LEGACY_USAGE_FILE
+
+
 def get_cache_file_path():
     if os.name == "nt":
         appdata = os.environ.get("APPDATA")
@@ -68,11 +78,21 @@ def get_cache_file_path():
     return Path.home() / CACHE_FILE
 
 
+def get_legacy_cache_file_path():
+    if os.name == "nt":
+        appdata = os.environ.get("APPDATA")
+        if appdata:
+            return Path(appdata) / "projectreadmegen" / LEGACY_CACHE_FILE
+    return Path.home() / LEGACY_CACHE_FILE
+
+
 def load_usage_data():
     path = get_usage_file_path()
-    if path.exists():
+    legacy_path = get_legacy_usage_file_path()
+    source_path = path if path.exists() else legacy_path
+    if source_path.exists():
         try:
-            with open(path, "r") as f:
+            with open(source_path, "r") as f:
                 return json.load(f)
         except Exception:
             return {"user_key_set": False, "github_token_set": False}
@@ -91,11 +111,13 @@ def save_usage_data(data):
 
 def load_project_cache(project_path):
     path = get_cache_file_path()
+    legacy_path = get_legacy_cache_file_path()
     cache_key = str(Path(project_path).resolve())
+    source_path = path if path.exists() else legacy_path
 
-    if path.exists():
+    if source_path.exists():
         try:
-            with open(path, "r") as f:
+            with open(source_path, "r") as f:
                 cache = json.load(f)
                 return cache.get(cache_key, {})
         except Exception:
@@ -341,8 +363,7 @@ def get_project_last_template(project_path):
 
 def get_project_readme_info(project_path):
     """Get README modification time from project cache."""
-    cache = load_project_cache(project_path)
-    project_data = cache.get(str(Path(project_path).resolve()), {})
+    project_data = load_project_cache(project_path)
     return {
         "last_readme_mtime": project_data.get("last_readme_mtime"),
         "last_readme_hash": project_data.get("last_readme_hash"),

@@ -1,6 +1,5 @@
 # src/generator.py
 
-import sys
 import logging
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -89,16 +88,99 @@ def generate_readme(scan_result: dict, detection: dict, config: dict) -> str:
 
 def save_readme(content: str, output_path: str) -> None:
     """
-    Write the generated README content to a file.
+    Write the generated README content to a file with safety checks.
 
     Parameters:
         content (str): The full README Markdown string.
         output_path (str): Full path where README.md should be written.
+
+    Raises:
+        FileOperationError: If file cannot be written.
     """
-    logger.info(f"Writing README to: {output_path}")
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(content)
-    logger.info(f"README successfully written ({len(content)} characters)")
+    from projectreadmegen.exceptions import FileOperationError, PermissionError as PermErr
+    from projectreadmegen.utils import validate_writeable_path, estimate_disk_space_needed
+    import tempfile
+    import shutil
+
+    if not content or not isinstance(content, str):
+        raise FileOperationError(
+            "Invalid content provided for README",
+            "The generated README content is invalid. Please try again.",
+        )
+
+    if not output_path or not isinstance(output_path, str):
+        raise FileOperationError(
+            f"Invalid output path: {output_path}",
+            "Please provide a valid output file path.",
+        )
+
+    try:
+        output = Path(output_path).resolve()
+
+        # Check disk space
+        has_space, space_msg = estimate_disk_space_needed(len(content))
+        if not has_space:
+            raise FileOperationError(
+                f"Insufficient disk space: {space_msg}",
+                space_msg,
+            )
+
+        # Ensure parent directory exists
+        output.parent.mkdir(parents=True, exist_ok=True)
+
+        # Validate write permissions
+        is_writeable, write_msg = validate_writeable_path(output)
+        if not is_writeable:
+            if "No write permission" in write_msg:
+                raise PermErr(
+                    write_msg,
+                    f"You don't have permission to write to '{output_path}'.",
+                )
+            else:
+                raise FileOperationError(
+                    write_msg,
+                    write_msg,
+                )
+
+        # Write to temporary file first, then move (atomic operation)
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=output.parent,
+                delete=False,
+                suffix=".tmp",
+            ) as tmp:
+                tmp.write(content)
+                tmp_path = tmp.name
+
+            # Move temp file to target location
+            shutil.move(tmp_path, str(output))
+            logger.info(f"README successfully written to: {output_path}")
+            logger.info(f"File size: {len(content)} characters")
+        except Exception as tmp_err:
+            # Clean up temp file if it exists
+            if tmp_path:
+                try:
+                    Path(tmp_path).unlink()
+                except OSError:
+                    pass
+            raise FileOperationError(
+                f"Failed to write README to {output_path}: {tmp_err}",
+                f"Unable to save the README file: {tmp_err}",
+            )
+
+    except PermErr:
+        raise
+    except FileOperationError:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error writing to {output_path}: {e}")
+        raise FileOperationError(
+            f"Unexpected error writing to {output_path}: {e}",
+            f"An unexpected error occurred while saving the README: {e}",
+        )
 
 
 def _format_title(raw_name: str) -> str:

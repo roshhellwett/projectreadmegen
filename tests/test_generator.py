@@ -161,6 +161,37 @@ class TestGenerator:
         assert isinstance(result, str)
         assert len(result) > 0
 
+    def test_standard_template_without_install_command_has_no_empty_code_block(self):
+        scan_result = {
+            "name": "unknown-project",
+            "tree": "",
+            "has_license": False,
+            "has_contributing": False,
+        }
+        detection = {
+            "primary_lang": "Unknown",
+            "languages": [],
+            "project_type": "unknown",
+            "description_hint": "A project.",
+            "install_cmd": "# See setup instructions below",
+            "run_cmd": "# See usage section below",
+            "has_tests": False,
+            "has_docs": False,
+            "license": "None",
+        }
+        config = {
+            "template": "standard",
+            "include_badges": False,
+            "include_tree": False,
+            "author": "",
+            "github_username": "",
+        }
+
+        result = generate_readme(scan_result, detection, config)
+
+        assert "```bash\n\n```" not in result
+        assert "follow the setup instructions" in result
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

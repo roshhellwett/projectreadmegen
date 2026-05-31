@@ -53,6 +53,34 @@ class TestScanner:
         with pytest.raises(Exception):
             scan_directory("nonexistent/path/12345")
 
+    def test_scan_skips_generated_binary_files(self, tmp_path):
+        """Generated artifacts and binary executables should not pollute detection."""
+        (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+        (tmp_path / "app.pyc").write_bytes(b"compiled")
+        (tmp_path / "tool.exe").write_bytes(b"binary")
+        (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+
+        result = scan_directory(str(tmp_path), max_depth=2, use_cache=False)
+
+        assert "main.py" in result["files"]
+        assert ".gitignore" in result["files"]
+        assert "app.pyc" not in result["files"]
+        assert "tool.exe" not in result["files"]
+        assert ".gitignore" in result["tree"]
+
+    def test_scan_skips_egg_info_directories(self, tmp_path):
+        """Package metadata directories should not appear in generated trees."""
+        package_meta = tmp_path / "demo.egg-info"
+        package_meta.mkdir()
+        (package_meta / "PKG-INFO").write_text("metadata", encoding="utf-8")
+        (tmp_path / "main.py").write_text("print('hi')", encoding="utf-8")
+
+        result = scan_directory(str(tmp_path), max_depth=2, use_cache=False)
+
+        assert "demo.egg-info" not in result["dirs"]
+        assert "PKG-INFO" not in result["files"]
+        assert "demo.egg-info" not in result["tree"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
