@@ -11,7 +11,7 @@
 
 If you find a security vulnerability, please report it by:
 1. Opening an issue on GitHub: https://github.com/roshhellwett/projectreadmegen/issues
-2. Or email: roshhellwett@icloud.com
+2. Or email: zenithprojects@icloud.com
 
 We will respond within 48 hours.
 
@@ -23,5 +23,4 @@ We will respond within 48 hours.
 
 ---
 
-© 2026 [Zenith Open Source Projects](https://zenithopensourceprojects.vercel.app/). All Rights Reserved.  
-Zenith is a Open Source Project Idea's by @roshhellwett
+© 2026 [Zenith Open Source Projects](https://zenithopensourceprojects.vercel.app/). All Rights Reserved. Zenith is a Open Source Project Idea's by @roshhellwett
