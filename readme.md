@@ -453,10 +453,4 @@ projectreadmegen/
 
 ---
 
-<div align="center">
 
-**Powered by [Zenith Open Source Projects](https://zenithopensourceprojects.vercel.app/)**
-
-Developer: [@roshhellwett](https://github.com/roshhellwett)
-
-</div>
