@@ -452,5 +452,10 @@ projectreadmegen/
 ```
 
 ---
+<<<<<<< HEAD
 
 
+=======
+© 2026 [Zenith Open Source Projects](https://zenithopensourceprojects.vercel.app/). All Rights Reserved. 
+Zenith is a Open Source Project Idea's by @roshhellwett
+>>>>>>> 7d84e2b498b41c0b0a811d1cc73d5ac5dff3d326
