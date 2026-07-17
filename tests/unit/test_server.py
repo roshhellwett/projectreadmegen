@@ -29,7 +29,7 @@ def test_serve_frontend():
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert "README Gen" in response.text
-    assert "Studio v7.0.0" in response.text
+    assert "Studio v8.0.1" in response.text
 
 
 def test_api_scan_absolute_path():

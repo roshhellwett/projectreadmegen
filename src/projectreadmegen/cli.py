@@ -58,8 +58,8 @@ def show_main_menu():
     console.clear()
     console.print(
         Panel(
-            """
-[bold white]PROJECT README GEN STUDIO v7.0.0[/bold white]
+            f"""
+[bold white]PROJECT README GEN STUDIO v{__version__}[/bold white]
 [dim]Architectural Documentation & Web Suite[/dim]
 
 [dim]Select an execution mode:[/dim]

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "projectreadmegen"
-version         = "7.0.0"
+version         = "8.0.1"
 description     = "Auto-generate professional README files from folder structure with AI power"
 readme          = "readme.md"
 requires-python = ">=3.10"

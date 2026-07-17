@@ -1,4 +1,4 @@
-"""End-to-End CLI Lifecycle Workflow Tests for Project README Gen 7.0.0.
+"""End-to-End CLI Lifecycle Workflow Tests for Project README Gen 8.0.1.
 
 Tests full end-to-end execution paths right from terminal commands down to
 disk persistence, template compilation, and atomic credential synchronization.

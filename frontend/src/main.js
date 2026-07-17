@@ -29,7 +29,7 @@ const pageInitState = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Project README Gen Studio 8.0 — Premium Architecture initialized');
+  console.log('Project README Gen Studio 8.0.1 — Premium Architecture initialized');
 
   // ─── Sidebar hamburger toggle ──────────────────────────
   const hamburgerBtn = document.getElementById('hamburger-toggle');
