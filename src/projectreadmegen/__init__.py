@@ -11,6 +11,7 @@ __version__ = "7.0.0"
 
 try:
     from projectreadmegen import usagetracker
+
     # Auto-sync persistent credentials from disk (~/.projectreadmegen_usage.json) into os.environ
     usagetracker.get_api_key()
     usagetracker.get_github_token()

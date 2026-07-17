@@ -1,6 +1,11 @@
 import pytest
 from pathlib import Path
-from projectreadmegen.pipeline import PipelineConfig, PipelineResult, run_pipeline, save_pipeline_result
+from projectreadmegen.pipeline import (
+    PipelineConfig,
+    PipelineResult,
+    run_pipeline,
+    save_pipeline_result,
+)
 
 
 def test_pipeline_config_defaults():
@@ -29,6 +34,7 @@ def test_pipeline_result_defaults():
 def test_run_pipeline_invalid_path():
     cfg = PipelineConfig(path="/nonexistent/path/12345")
     from projectreadmegen.exceptions import InvalidPathError
+
     with pytest.raises(InvalidPathError):
         run_pipeline(cfg)
 
@@ -38,6 +44,7 @@ def test_run_pipeline_file_not_directory(tmp_path):
     f.write_text("hello")
     cfg = PipelineConfig(path=str(f))
     from projectreadmegen.exceptions import InvalidPathError
+
     with pytest.raises(InvalidPathError):
         run_pipeline(cfg)
 
@@ -62,9 +69,12 @@ def test_run_pipeline_normal(tmp_path):
 def test_run_pipeline_ai_fallback(tmp_path, monkeypatch):
     (tmp_path / "main.py").write_text("print('hi')")
     from projectreadmegen import ai_provider
+
     def fail_ai(*a, **kw):
         from projectreadmegen.exceptions import APIError
+
         raise APIError("API down")
+
     monkeypatch.setattr(ai_provider, "generate_ai_readme", fail_ai)
     cfg = PipelineConfig(path=str(tmp_path), use_ai=True, template="standard")
     result = run_pipeline(cfg)

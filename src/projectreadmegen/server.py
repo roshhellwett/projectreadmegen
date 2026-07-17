@@ -26,7 +26,13 @@ from projectreadmegen.github_profile import (
 )
 from projectreadmegen import usagetracker, __version__
 from projectreadmegen.exceptions import APIError as CustomAPIError
-from projectreadmegen.skills_manager import discover_all_skills, search_skills, install_skills, ensure_agent_md
+from projectreadmegen.skills_manager import (
+    discover_all_skills,
+    search_skills,
+    install_skills,
+    register_installed_skills,
+    detect_global_tools,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,16 +60,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Pydantic Request Models
 class ScanRequest(BaseModel):
     path: str = Field(default=".", description="Path to directory to scan")
     use_cache: bool = Field(default=True, description="Whether to use scanner cache")
-    max_depth: Optional[int] = Field(default=3, description="Maximum directory traversal depth")
+    max_depth: Optional[int] = Field(
+        default=3, description="Maximum directory traversal depth"
+    )
+
 
 class GenerateRequest(BaseModel):
     scan_result: Dict[str, Any]
     detection: Dict[str, Any]
     config: Dict[str, Any] = Field(default_factory=dict)
+
 
 class GenerateAIRequest(BaseModel):
     scan_result: Optional[Dict[str, Any]] = None
@@ -74,14 +85,17 @@ class GenerateAIRequest(BaseModel):
     tone: str = "professional"
     custom_instructions: str = ""
 
+
 class GitHubProfileRequest(BaseModel):
     username: str
     style: str = "professional"
     token: Optional[str] = None
     custom_tagline: Optional[str] = ""
 
+
 class APIKeyRequest(BaseModel):
     api_key: str = Field(..., description="Groq API Key (starts with gsk_)")
+
 
 class GraphChatRequest(BaseModel):
     node_id: str
@@ -118,7 +132,7 @@ async def set_api_key(req: APIKeyRequest):
     if not key or not key.startswith("gsk_") or len(key) < 12:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid Groq API key format. Must start with 'gsk_'."
+            detail="Invalid Groq API key format. Must start with 'gsk_'.",
         )
     usagetracker.save_api_key(key)
     return {"status": "success", "message": "API key updated successfully!"}
@@ -155,10 +169,12 @@ async def api_scan_project(req: ScanRequest):
     resolved_path = _validate_scan_path(req.path)
 
     try:
-        scan_res = scan_directory(str(resolved_path), max_depth=req.max_depth or 3, use_cache=req.use_cache)
+        scan_res = scan_directory(
+            str(resolved_path), max_depth=req.max_depth or 3, use_cache=req.use_cache
+        )
         detection_res = detect_stack(scan_res)
         config_res = load_config(str(resolved_path))
-        
+
         return {
             "status": "success",
             "scan_result": scan_res,
@@ -170,7 +186,7 @@ async def api_scan_project(req: ScanRequest):
         logger.error(f"Error scanning directory {resolved_path}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to scan directory: {str(e)}"
+            detail=f"Failed to scan directory: {str(e)}",
         )
 
 
@@ -188,7 +204,7 @@ async def api_generate_readme(req: GenerateRequest):
         logger.error(f"Error generating README: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate README: {str(e)}"
+            detail=f"Failed to generate README: {str(e)}",
         )
 
 
@@ -199,23 +215,23 @@ async def api_generate_ai_readme(req: GenerateAIRequest):
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Groq API key not configured. Please add your key in the Dashboard or Menu option 3."
+            detail="Groq API key not configured. Please add your key in the Dashboard or Menu option 3.",
         )
-    
+
     try:
         scan_res = req.scan_result
         detection_res = req.detection
         config_res = req.config or {}
-        
+
         if not scan_res or not detection_res:
             resolved_path = _validate_scan_path(req.path or ".")
             scan_res = scan_directory(str(resolved_path), use_cache=True)
             detection_res = detect_stack(scan_res)
             config_res = load_config(str(resolved_path))
-        
+
         client = GrokClient(api_key=api_key)
         context = build_project_context(scan_res, detection_res, config_res)
-        
+
         tone_prompts = {
             "professional": "Your tone is authoritative, highly polished, polished corporate/industry standard, and clean.",
             "technical": "Your tone is deeply technical, focusing on architecture, APIs, performance characteristics, and developer exactness.",
@@ -223,7 +239,7 @@ async def api_generate_ai_readme(req: GenerateAIRequest):
             "concise": "Your tone is ultra-concise, direct, bullet-focused, and minimal without fluff.",
         }
         tone_desc = tone_prompts.get(req.tone.lower(), tone_prompts["professional"])
-        
+
         system_prompt = f"""You are a world-class technical writer and AI software architect specializing in creating stunning, industry-standard README files for software projects.
 {tone_desc}
 - Use proper Markdown hierarchy with clear section headers (`#`, `##`, `###`).
@@ -233,14 +249,14 @@ async def api_generate_ai_readme(req: GenerateAIRequest):
 
         if req.custom_instructions:
             system_prompt += f"\n\nUSER CUSTOM INSTRUCTIONS:\n{req.custom_instructions}"
-            
+
         readme_content = client.generate_readme(
             project_context=context,
             system_prompt=system_prompt,
             model=req.model,
             max_tokens=4500,
         )
-        
+
         return {
             "status": "success",
             "readme": readme_content,
@@ -250,7 +266,9 @@ async def api_generate_ai_readme(req: GenerateAIRequest):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
     except Exception as e:
         logger.error(f"Error in AI generation: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
 
 
 @app.post("/api/github-profile")
@@ -260,21 +278,21 @@ async def api_generate_github_profile(req: GitHubProfileRequest):
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Groq API key not configured. Please set it in the Dashboard."
+            detail="Groq API key not configured. Please set it in the Dashboard.",
         )
-    
+
     username = req.username.strip()
     is_valid, msg = validate_github_username(username)
     if not is_valid:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
-    
+
     profile_url = f"https://github.com/{username}"
-    
+
     try:
         user_data = fetch_github_user(username, token=req.token)
         repos = fetch_user_repos(username, token=req.token)
         languages = calculate_language_stats(repos) if repos else {}
-        
+
         readme_content = generate_profile_readme_content(
             username=username,
             profile_url=profile_url,
@@ -283,15 +301,16 @@ async def api_generate_github_profile(req: GitHubProfileRequest):
             repos=repos,
             languages=languages,
         )
-        
+
         if req.custom_tagline and "readme-typing-svg" in readme_content:
             import re
+
             readme_content = re.sub(
-                r'lines=[^&]+',
+                r"lines=[^&]+",
                 f'lines={req.custom_tagline.replace(" ", "+")}',
-                readme_content
+                readme_content,
             )
-            
+
         return {
             "status": "success",
             "readme": readme_content,
@@ -303,7 +322,7 @@ async def api_generate_github_profile(req: GitHubProfileRequest):
         logger.error(f"Error generating GitHub profile README: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Profile generation failed: {str(e)}"
+            detail=f"Profile generation failed: {str(e)}",
         )
 
 
@@ -314,7 +333,7 @@ async def api_graph_chat(req: GraphChatRequest):
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Groq API key not configured. Please set your API key in the API Dashboard tab."
+            detail="Groq API key not configured. Please set your API key in the API Dashboard tab.",
         )
 
     try:
@@ -324,12 +343,44 @@ async def api_graph_chat(req: GraphChatRequest):
             p = Path(req.node_path)
             if p.exists() and p.is_file():
                 suffix = p.suffix.lower()
-                binary_exts = {'.png','.jpg','.jpeg','.gif','.bmp','.ico','.svg','.webp',
-                               '.pdf','.exe','.dll','.so','.dylib','.bin','.dat',
-                               '.zip','.tar','.gz','.rar','.7z',
-                               '.mp3','.mp4','.avi','.mov','.wav','.ogg',
-                               '.woff','.woff2','.ttf','.eot',
-                               '.pyc','.pyo','.pyd','.obj','.o','.class'}
+                binary_exts = {
+                    ".png",
+                    ".jpg",
+                    ".jpeg",
+                    ".gif",
+                    ".bmp",
+                    ".ico",
+                    ".svg",
+                    ".webp",
+                    ".pdf",
+                    ".exe",
+                    ".dll",
+                    ".so",
+                    ".dylib",
+                    ".bin",
+                    ".dat",
+                    ".zip",
+                    ".tar",
+                    ".gz",
+                    ".rar",
+                    ".7z",
+                    ".mp3",
+                    ".mp4",
+                    ".avi",
+                    ".mov",
+                    ".wav",
+                    ".ogg",
+                    ".woff",
+                    ".woff2",
+                    ".ttf",
+                    ".eot",
+                    ".pyc",
+                    ".pyo",
+                    ".pyd",
+                    ".obj",
+                    ".o",
+                    ".class",
+                }
                 if suffix in binary_exts:
                     file_preview = f"\n\n[Binary or image file — cannot preview contents. Filename: {req.node_path}]"
                 else:
@@ -340,7 +391,9 @@ async def api_graph_chat(req: GraphChatRequest):
                         text = raw.decode("utf-8", errors="replace")
                         if len(raw) >= MAX_FILE_BYTES:
                             text += "\n\n[File truncated at ~4K tokens to stay within API rate limits]"
-                        file_preview = f"\n\nFULL FILE ({req.node_path}):\n```\n" + text + "\n```"
+                        file_preview = (
+                            f"\n\nFULL FILE ({req.node_path}):\n```\n" + text + "\n```"
+                        )
                     except Exception:
                         file_preview = f"\n\n[Could not read file: {req.node_path}]"
 
@@ -349,11 +402,12 @@ async def api_graph_chat(req: GraphChatRequest):
         if req.web_search and req.message:
             try:
                 import requests as http_req
+
                 query = f"programming {req.message} {req.node_label}"
-                encoded = __import__('urllib.parse').quote(query)
+                encoded = __import__("urllib.parse").quote(query)
                 resp = http_req.get(
                     f"https://api.duckduckgo.com/?q={encoded}&format=json&no_html=1",
-                    timeout=10
+                    timeout=10,
                 )
                 if resp.status_code == 200:
                     ddg = resp.json()
@@ -365,7 +419,10 @@ async def api_graph_chat(req: GraphChatRequest):
                             if isinstance(t, dict) and "Text" in t:
                                 results.append(t["Text"])
                     if results:
-                        web_context = "\n\nWeb search results for your query:\n" + "\n".join(f"- {r}" for r in results)
+                        web_context = (
+                            "\n\nWeb search results for your query:\n"
+                            + "\n".join(f"- {r}" for r in results)
+                        )
             except Exception as exc:
                 web_context = f"\n\n[Web search unavailable: {exc}]"
 
@@ -393,24 +450,32 @@ async def api_graph_chat(req: GraphChatRequest):
         client = GrokClient(api_key=api_key)
         messages = [{"role": "system", "content": system_prompt}]
         MAX_HISTORY_TURNS = 5
-        recent_history = req.history[-MAX_HISTORY_TURNS * 2:] if len(req.history) > MAX_HISTORY_TURNS * 2 else req.history
+        recent_history = (
+            req.history[-MAX_HISTORY_TURNS * 2 :]
+            if len(req.history) > MAX_HISTORY_TURNS * 2
+            else req.history
+        )
         for turn in recent_history:
-            messages.append({"role": turn.get("role", "user"), "content": turn.get("content", "")})
-        
-        user_query = req.message if req.message != "AUDIT" else f"Review this file: what does it do, is it well structured, and what would you improve?"
+            messages.append(
+                {"role": turn.get("role", "user"), "content": turn.get("content", "")}
+            )
+
+        user_query = (
+            req.message
+            if req.message != "AUDIT"
+            else f"Review this file: what does it do, is it well structured, and what would you improve?"
+        )
         messages.append({"role": "user", "content": user_query})
 
         reply_content = client.generate_graph_chat(messages=messages, model=req.model)
-        return {
-            "status": "success",
-            "reply": reply_content,
-            "model_used": req.model
-        }
+        return {"status": "success", "reply": reply_content, "model_used": req.model}
     except CustomAPIError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
     except Exception as e:
         logger.error(f"Error in Graph Chat: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
 
 
 # =========================================================================
@@ -424,8 +489,11 @@ def _run_git(cmd: list, cwd: str) -> subprocess.CompletedProcess:
     """Run a git command safely with timeout."""
     return subprocess.run(
         ["git"] + cmd,
-        capture_output=True, text=True, cwd=cwd,
-        timeout=15, errors="replace"
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+        timeout=15,
+        errors="replace",
     )
 
 
@@ -437,7 +505,7 @@ def _resolve_git_dir(raw_path: str) -> str:
     if not git_dir.exists():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Not a git repository: '{resolved}' has no .git directory."
+            detail=f"Not a git repository: '{resolved}' has no .git directory.",
         )
     return str(resolved)
 
@@ -451,11 +519,12 @@ async def api_git_graph(dir: str = ".", count: int = 80):
         # 1. Get commit log with details
         fmt = "HASH:%H%nPARENTS:%P%nAUTHOR:%an%nDATE:%ar%nREFS:%D%nMSG:%s"
         result = _run_git(
-            ["log", "--all", f"-{count}", f"--format={fmt}", "--name-only"],
-            repo_path
+            ["log", "--all", f"-{count}", f"--format={fmt}", "--name-only"], repo_path
         )
         if result.returncode != 0:
-            raise HTTPException(status_code=400, detail=result.stderr.strip() or "git log failed")
+            raise HTTPException(
+                status_code=400, detail=result.stderr.strip() or "git log failed"
+            )
 
         commits = []
         current = None
@@ -467,7 +536,10 @@ async def api_git_graph(dir: str = ".", count: int = 80):
                     current["files"] = files_buf
                     commits.append(current)
                     files_buf = []
-                current = {"hash": line[5:].strip(), "hash_short": line[5:12].strip()[:7]}
+                current = {
+                    "hash": line[5:].strip(),
+                    "hash_short": line[5:12].strip()[:7],
+                }
             elif line.startswith("PARENTS:"):
                 raw = line[8:].strip()
                 current["parents"] = raw.split() if raw else []
@@ -488,7 +560,14 @@ async def api_git_graph(dir: str = ".", count: int = 80):
             commits.append(current)
 
         # 2. Compute branch colors (stable by name)
-        branch_colors = ["#18181b", "#52525b", "#71717a", "#a1a1aa", "#b45309", "#2563eb"]
+        branch_colors = [
+            "#18181b",
+            "#52525b",
+            "#71717a",
+            "#a1a1aa",
+            "#b45309",
+            "#2563eb",
+        ]
         branch_map = {}
         col_idx = 0
 
@@ -510,11 +589,13 @@ async def api_git_graph(dir: str = ".", count: int = 80):
                         name = name.split(" -> ")[0]
                     if name and name not in seen_branches:
                         seen_branches.add(name)
-                        branches.append({
-                            "name": name,
-                            "color": _get_color(name),
-                            "head": c["hash_short"]
-                        })
+                        branches.append(
+                            {
+                                "name": name,
+                                "color": _get_color(name),
+                                "head": c["hash_short"],
+                            }
+                        )
 
         # 3. Get status
         status_result = _run_git(["status", "--porcelain"], repo_path)
@@ -533,7 +614,9 @@ async def api_git_graph(dir: str = ".", count: int = 80):
 
         # 4. Resolve HEAD branch name
         head_result = _run_git(["rev-parse", "--abbrev-ref", "HEAD"], repo_path)
-        head_branch = head_result.stdout.strip() if head_result.returncode == 0 else "HEAD"
+        head_branch = (
+            head_result.stdout.strip() if head_result.returncode == 0 else "HEAD"
+        )
 
         return {
             "status": "success",
@@ -541,7 +624,7 @@ async def api_git_graph(dir: str = ".", count: int = 80):
             "branches": branches,
             "git_status": status,
             "head_branch": head_branch,
-            "repo_path": repo_path
+            "repo_path": repo_path,
         }
 
     except HTTPException:
@@ -559,27 +642,30 @@ async def api_git_graph(dir: str = ".", count: int = 80):
 async def api_git_diff(file: str, hash: str = "", dir: str = "."):
     """Return diff for a file at a specific commit. If hash is empty, use working tree diff."""
     repo_path = _resolve_git_dir(dir)
-    clean_file = file.replace('\\', '/')
+    clean_file = file.replace("\\", "/")
 
     try:
         if hash:
-            result = _run_git(["show", "--no-color", "--format=", hash, "--", clean_file], repo_path)
+            result = _run_git(
+                ["show", "--no-color", "--format=", hash, "--", clean_file], repo_path
+            )
             if result.returncode != 0 or not result.stdout.strip():
-                fallback = _run_git(["show", "--no-color", hash, "--", clean_file], repo_path)
+                fallback = _run_git(
+                    ["show", "--no-color", hash, "--", clean_file], repo_path
+                )
                 if fallback.returncode == 0 and fallback.stdout.strip():
                     result = fallback
         else:
-            result = _run_git(["diff", "HEAD", "--no-color", "--", clean_file], repo_path)
+            result = _run_git(
+                ["diff", "HEAD", "--no-color", "--", clean_file], repo_path
+            )
 
         if result.returncode != 0:
-            raise HTTPException(status_code=400, detail=result.stderr.strip() or "git diff failed")
+            raise HTTPException(
+                status_code=400, detail=result.stderr.strip() or "git diff failed"
+            )
 
-        return {
-            "status": "success",
-            "diff": result.stdout,
-            "file": file,
-            "hash": hash
-        }
+        return {"status": "success", "diff": result.stdout, "file": file, "hash": hash}
 
     except HTTPException:
         raise
@@ -596,9 +682,12 @@ async def api_git_diff(file: str, hash: str = "", dir: str = "."):
 # SKILLS ENDPOINTS
 # =========================================================================
 
+
 class SkillsInstallRequest(BaseModel):
     project_path: str = Field(default=".", description="Target project directory")
     skills: List[str] = Field(..., description="List of skill IDs to install")
+    tools: Optional[List[str]] = Field(default=None, description="Override auto-detected AI tools (opencode, claude-code, cursor, codex-cli, gemini-cli)")
+
 
 @app.get("/api/skills/list")
 async def api_skills_list(q: str = ""):
@@ -615,27 +704,48 @@ async def api_skills_list(q: str = ""):
         grouped.setdefault(cat, []).append(s)
 
     sorted_grouped = dict(sorted(grouped.items()))
-    return {"status": "success", "skills": filtered, "grouped": sorted_grouped, "total": len(filtered)}
+    return {
+        "status": "success",
+        "skills": filtered,
+        "grouped": sorted_grouped,
+        "total": len(filtered),
+    }
+
+
+@app.get("/api/skills/detect-tools")
+async def api_skills_detect_tools():
+    """Detect which AI coding tools are installed globally on the machine."""
+    tools = detect_global_tools()
+    return {"status": "success", "tools": tools}
+
 
 @app.post("/api/skills/install")
 async def api_skills_install(req: SkillsInstallRequest):
-    """Install selected skills into target project directory and update agent.md."""
+    """Install selected skills into target project directory and register with AI tools."""
     project_path = req.project_path.strip() or "."
     resolved = Path(project_path).resolve()
 
     if not resolved.exists():
-        raise HTTPException(status_code=404, detail=f"Project directory not found: {resolved}")
+        raise HTTPException(
+            status_code=404, detail=f"Project directory not found: {resolved}"
+        )
     if not resolved.is_dir():
-        raise HTTPException(status_code=400, detail=f"Path is not a directory: {resolved}")
+        raise HTTPException(
+            status_code=400, detail=f"Path is not a directory: {resolved}"
+        )
 
     result = install_skills(str(resolved), req.skills)
+
+    tools_set = set(req.tools) if req.tools else None
     try:
-        agent_md_path = ensure_agent_md(str(resolved), result["installed"])
-        result["agent_md"] = agent_md_path
+        registration = register_installed_skills(resolved, result["installed"], tools_set)
+        result["registration"] = registration
+        result["agent_md"] = registration.get("agents_md")
     except Exception as e:
-        result["agent_md_error"] = str(e)
+        result["registration"] = {"error": str(e), "registrations": [], "errors": [{"tool": "*", "skill_id": "*", "error": str(e)}]}
 
     return {"status": "success", **result}
+
 
 # =========================================================================
 # STATIC FILES SETUP: Serve compiled frontend
@@ -647,20 +757,29 @@ FRONTEND_RAW = Path(__file__).parent.parent.parent / "frontend"
 ACTIVE_DIST = (
     PACKAGED_DIST
     if (PACKAGED_DIST.exists() and (PACKAGED_DIST / "index.html").exists())
-    else (REPO_DIST if (REPO_DIST.exists() and (REPO_DIST / "index.html").exists()) else None)
+    else (
+        REPO_DIST
+        if (REPO_DIST.exists() and (REPO_DIST / "index.html").exists())
+        else None
+    )
 )
 
 if ACTIVE_DIST:
     if (ACTIVE_DIST / "assets").exists():
-        app.mount("/assets", StaticFiles(directory=str(ACTIVE_DIST / "assets")), name="assets")
+        app.mount(
+            "/assets", StaticFiles(directory=str(ACTIVE_DIST / "assets")), name="assets"
+        )
+
     @app.get("/{full_path:path}")
     async def serve_dist_spa(full_path: str):
         file_path = ACTIVE_DIST / full_path
         if file_path.exists() and file_path.is_file():
             return FileResponse(file_path)
         return FileResponse(ACTIVE_DIST / "index.html")
+
 elif FRONTEND_RAW.exists() and (FRONTEND_RAW / "index.html").exists():
     app.mount("/src", StaticFiles(directory=str(FRONTEND_RAW / "src")), name="src")
+
     @app.get("/{full_path:path}")
     async def serve_raw_spa(full_path: str):
         file_path = FRONTEND_RAW / full_path

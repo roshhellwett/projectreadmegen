@@ -61,18 +61,22 @@ def generate_readme(scan_result: dict, detection: dict, config: dict) -> str:
         "author": config.get("author", ""),
         "github_username": github_username,
         "github_url": f"https://github.com/{github_username}",
-        "badge_line": build_badge_line(detection)
-        if config.get("include_badges")
-        else "",
+        "badge_line": (
+            build_badge_line(detection) if config.get("include_badges") else ""
+        ),
         "primary_lang": detection["primary_lang"],
         "all_languages": detection["languages"],
         "project_type": detection["project_type"],
-        "install_cmd": detection["install_cmd"]
-        if detection["install_cmd"] and not detection["install_cmd"].startswith("#")
-        else "",
-        "run_cmd": detection["run_cmd"]
-        if detection["run_cmd"] and not detection["run_cmd"].startswith("#")
-        else "",
+        "install_cmd": (
+            detection["install_cmd"]
+            if detection["install_cmd"] and not detection["install_cmd"].startswith("#")
+            else ""
+        ),
+        "run_cmd": (
+            detection["run_cmd"]
+            if detection["run_cmd"] and not detection["run_cmd"].startswith("#")
+            else ""
+        ),
         "folder_tree": scan_result["tree"] if config.get("include_tree") else "",
         "has_license": scan_result["has_license"],
         "has_contributing": scan_result["has_contributing"],
@@ -97,8 +101,14 @@ def save_readme(content: str, output_path: str) -> None:
     Raises:
         FileOperationError: If file cannot be written.
     """
-    from projectreadmegen.exceptions import FileOperationError, PermissionError as PermErr
-    from projectreadmegen.utils import validate_writeable_path, estimate_disk_space_needed
+    from projectreadmegen.exceptions import (
+        FileOperationError,
+        PermissionError as PermErr,
+    )
+    from projectreadmegen.utils import (
+        validate_writeable_path,
+        estimate_disk_space_needed,
+    )
     import tempfile
     import shutil
 

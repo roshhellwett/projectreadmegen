@@ -74,4 +74,4 @@ def test_static_spa_delivery_smoke():
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers.get("content-type", "")
-    assert "<title>" in response.text or "<div id=\"root\">" in response.text
+    assert "<title>" in response.text or '<div id="root">' in response.text

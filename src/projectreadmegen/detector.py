@@ -112,7 +112,7 @@ def _detect_license(files: list, root: str) -> str:
                 for lic_id, keywords in license_identifiers.items():
                     if any(kw.upper() in content for kw in keywords):
                         return lic_id
-            except (IOError, OSError):
+            except IOError, OSError:
                 continue
 
     if any(f.upper() in license_names_upper for f in files):
@@ -136,7 +136,9 @@ def _detect_project_type(
         if any(d in dirs for d in ["src", "public", "pages", "components", "app"]):
             return "web-app"
     if any(
-        f.startswith(("vite.config.", "next.config.", "nuxt.config.", "tailwind.config."))
+        f.startswith(
+            ("vite.config.", "next.config.", "nuxt.config.", "tailwind.config.")
+        )
         for f in lower_files
     ):
         return "web-app"
@@ -144,7 +146,10 @@ def _detect_project_type(
         return "web-app"
 
     # Bot
-    if any(f in file_set for f in ["bot.py", "telegram_bot.py"]) and "Python" in languages:
+    if (
+        any(f in file_set for f in ["bot.py", "telegram_bot.py"])
+        and "Python" in languages
+    ):
         return "telegram-bot"
 
     # Library

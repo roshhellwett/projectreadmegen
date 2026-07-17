@@ -18,7 +18,7 @@ class TestGenerator:
             "has_license": False,
             "has_contributing": False,
         }
-        
+
         detection = {
             "primary_lang": "Python",
             "languages": ["Python"],
@@ -30,7 +30,7 @@ class TestGenerator:
             "has_docs": False,
             "license": "None",
         }
-        
+
         config = {
             "template": "minimal",
             "include_badges": False,
@@ -39,13 +39,13 @@ class TestGenerator:
             "author": "Test Author",
             "github_username": "testuser",
         }
-        
+
         result = generate_readme(scan_result, detection, config)
-        
+
         assert isinstance(result, str)
         assert len(result) > 0
         assert "Test Project" in result
-    
+
     def test_generate_standard_template(self):
         """Test that standard template produces output."""
         scan_result = {
@@ -54,7 +54,7 @@ class TestGenerator:
             "has_license": True,
             "has_contributing": False,
         }
-        
+
         detection = {
             "primary_lang": "Python",
             "languages": ["Python"],
@@ -66,7 +66,7 @@ class TestGenerator:
             "has_docs": False,
             "license": "MIT",
         }
-        
+
         config = {
             "template": "standard",
             "include_badges": True,
@@ -75,12 +75,12 @@ class TestGenerator:
             "author": "",
             "github_username": "developer",
         }
-        
+
         result = generate_readme(scan_result, detection, config)
-        
+
         assert isinstance(result, str)
         assert len(result) > 0
-    
+
     def test_generate_full_template(self):
         """Test that full template produces output."""
         scan_result = {
@@ -89,7 +89,7 @@ class TestGenerator:
             "has_license": True,
             "has_contributing": True,
         }
-        
+
         detection = {
             "primary_lang": "TypeScript",
             "languages": ["TypeScript", "JavaScript"],
@@ -101,7 +101,7 @@ class TestGenerator:
             "has_docs": True,
             "license": "Apache-2.0",
         }
-        
+
         config = {
             "template": "full",
             "include_badges": True,
@@ -110,12 +110,12 @@ class TestGenerator:
             "author": "Dev",
             "github_username": "devuser",
         }
-        
+
         result = generate_readme(scan_result, detection, config)
-        
+
         assert isinstance(result, str)
         assert len(result) > 0
-    
+
     def test_generate_academic_template(self):
         """Test that academic template produces output."""
         scan_result = {
@@ -124,7 +124,7 @@ class TestGenerator:
             "has_license": False,
             "has_contributing": False,
         }
-        
+
         detection = {
             "primary_lang": "Python",
             "languages": ["Python"],
@@ -136,7 +136,7 @@ class TestGenerator:
             "has_docs": False,
             "license": "None",
         }
-        
+
         config = {
             "template": "academic",
             "include_badges": False,
@@ -145,18 +145,40 @@ class TestGenerator:
             "author": "Student",
             "github_username": "student",
         }
-        
+
         result = generate_readme(scan_result, detection, config)
-        
+
         assert isinstance(result, str)
         assert len(result) > 0
-    
+
     def test_generate_invalid_template_raises(self):
         """Test that invalid template falls back to standard."""
-        scan_result = {"name": "test", "tree": "", "has_license": False, "has_contributing": False}
-        detection = {"primary_lang": "Python", "languages": ["Python"], "project_type": "unknown", "description_hint": "A Python project.", "install_cmd": "", "run_cmd": "", "has_tests": False, "has_docs": False, "license": "None"}
-        config = {"template": "nonexistent", "include_badges": False, "include_tree": False, "max_tree_depth": 3, "author": "", "github_username": ""}
-        
+        scan_result = {
+            "name": "test",
+            "tree": "",
+            "has_license": False,
+            "has_contributing": False,
+        }
+        detection = {
+            "primary_lang": "Python",
+            "languages": ["Python"],
+            "project_type": "unknown",
+            "description_hint": "A Python project.",
+            "install_cmd": "",
+            "run_cmd": "",
+            "has_tests": False,
+            "has_docs": False,
+            "license": "None",
+        }
+        config = {
+            "template": "nonexistent",
+            "include_badges": False,
+            "include_tree": False,
+            "max_tree_depth": 3,
+            "author": "",
+            "github_username": "",
+        }
+
         result = generate_readme(scan_result, detection, config)
         assert isinstance(result, str)
         assert len(result) > 0

@@ -58,7 +58,9 @@ def load_config(root_path: str) -> dict:
                 if key in config:
                     config[key] = value
                 else:
-                    logger.warning(f"Unknown config key in readmegen.config.json: {key}")
+                    logger.warning(
+                        f"Unknown config key in readmegen.config.json: {key}"
+                    )
 
             logger.debug(f"Loaded user config: {config}")
         except json.JSONDecodeError as e:

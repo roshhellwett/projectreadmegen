@@ -13,8 +13,18 @@ from projectreadmegen.skills_manager import (
 
 def test_search_skills_exact_match():
     skills = [
-        {"id": "test-skill", "name": "Test Skill", "description": "A test skill", "category": "Testing"},
-        {"id": "other", "name": "Other Skill", "description": "Something else", "category": "Dev"},
+        {
+            "id": "test-skill",
+            "name": "Test Skill",
+            "description": "A test skill",
+            "category": "Testing",
+        },
+        {
+            "id": "other",
+            "name": "Other Skill",
+            "description": "Something else",
+            "category": "Dev",
+        },
     ]
     result = search_skills("test-skill", skills)
     assert len(result) == 1
@@ -23,7 +33,12 @@ def test_search_skills_exact_match():
 
 def test_search_skills_prefix_match():
     skills = [
-        {"id": "deployment", "name": "Deployment Skill", "description": "", "category": "DevOps"},
+        {
+            "id": "deployment",
+            "name": "Deployment Skill",
+            "description": "",
+            "category": "DevOps",
+        },
         {"id": "debug", "name": "Debug Tool", "description": "", "category": "Dev"},
     ]
     result = search_skills("dep", skills)
@@ -33,7 +48,12 @@ def test_search_skills_prefix_match():
 
 def test_search_skills_substring_match():
     skills = [
-        {"id": "my-skill", "name": "My Awesome Skill", "description": "", "category": "Other"},
+        {
+            "id": "my-skill",
+            "name": "My Awesome Skill",
+            "description": "",
+            "category": "Other",
+        },
         {"id": "other", "name": "Other", "description": "", "category": "Misc"},
     ]
     result = search_skills("awesome", skills)
@@ -53,8 +73,18 @@ def test_search_skills_category_match():
 
 def test_search_skills_description_match():
     skills = [
-        {"id": "skill1", "name": "S1", "description": "This tool helps with deployment", "category": "Tools"},
-        {"id": "skill2", "name": "S2", "description": "Nothing relevant", "category": "Tools"},
+        {
+            "id": "skill1",
+            "name": "S1",
+            "description": "This tool helps with deployment",
+            "category": "Tools",
+        },
+        {
+            "id": "skill2",
+            "name": "S2",
+            "description": "Nothing relevant",
+            "category": "Tools",
+        },
     ]
     result = search_skills("deployment", skills)
     assert len(result) == 1
@@ -76,14 +106,21 @@ def test_search_skills_empty_query():
 def test_search_skills_scoring_order():
     skills = [
         {"id": "z-match", "name": "Exact Match", "description": "", "category": "X"},
-        {"id": "a-match", "name": "Another Exact Match", "description": "", "category": "X"},
+        {
+            "id": "a-match",
+            "name": "Another Exact Match",
+            "description": "",
+            "category": "X",
+        },
     ]
     result = search_skills("exact match", skills)
     assert len(result) >= 2
 
 
 def test_discover_all_skills_no_root():
-    with patch("projectreadmegen.skills_manager._SKILLS_ROOT", Path("/nonexistent/path")):
+    with patch(
+        "projectreadmegen.skills_manager._SKILLS_ROOT", Path("/nonexistent/path")
+    ):
         result = discover_all_skills()
         assert result == []
 
@@ -97,7 +134,10 @@ def skills_fs(tmp_path):
     skill_dir = cat / "test-skill"
     skill_dir.mkdir()
     md = skill_dir / "SKILL.md"
-    md.write_text('description: "A test skill"\nrisk: low\nsource: https://example.com\n', encoding="utf-8")
+    md.write_text(
+        'description: "A test skill"\nrisk: low\nsource: https://example.com\n',
+        encoding="utf-8",
+    )
     return skills_root
 
 
@@ -129,7 +169,15 @@ def test_install_skills_skill_not_found(tmp_path):
 def test_install_skills_source_missing(skills_fs, tmp_path):
     with patch("projectreadmegen.skills_manager._SKILLS_ROOT", skills_fs):
         with patch("projectreadmegen.skills_manager.discover_all_skills") as mock_disc:
-            mock_disc.return_value = [{"id": "ghost", "name": "Ghost", "description": "", "category": "Testing", "_path": str(skills_fs / "Testing" / "ghost")}]
+            mock_disc.return_value = [
+                {
+                    "id": "ghost",
+                    "name": "Ghost",
+                    "description": "",
+                    "category": "Testing",
+                    "_path": str(skills_fs / "Testing" / "ghost"),
+                }
+            ]
             result = install_skills(str(tmp_path), ["ghost"])
             assert len(result["errors"]) == 1
 
@@ -164,7 +212,10 @@ def test_ensure_agent_md_creates_new(tmp_path):
 
 def test_ensure_agent_md_appends_to_existing(tmp_path):
     agent_md = tmp_path / "agent.md"
-    agent_md.write_text("# Skills Configuration\n\n## Installed Skills\n\n### Existing Skill\n- **Path**: `skill/existing/`\n", encoding="utf-8")
+    agent_md.write_text(
+        "# Skills Configuration\n\n## Installed Skills\n\n### Existing Skill\n- **Path**: `skill/existing/`\n",
+        encoding="utf-8",
+    )
     installed = [{"id": "new-skill", "status": "installed"}]
     (tmp_path / "skill" / "new-skill").mkdir(parents=True)
     (tmp_path / "skill" / "new-skill" / "SKILL.md").write_text(
@@ -177,7 +228,10 @@ def test_ensure_agent_md_appends_to_existing(tmp_path):
 
 
 def test_ensure_agent_md_no_duplicates(tmp_path):
-    installed = [{"id": "test-skill", "status": "installed"}, {"id": "test-skill", "status": "installed"}]
+    installed = [
+        {"id": "test-skill", "status": "installed"},
+        {"id": "test-skill", "status": "installed"},
+    ]
     (tmp_path / "skill" / "test-skill").mkdir(parents=True)
     (tmp_path / "skill" / "test-skill" / "SKILL.md").write_text(
         'description: "A test skill"\n', encoding="utf-8"

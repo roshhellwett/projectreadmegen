@@ -34,6 +34,7 @@ def test_load_config_malformed_json(tmp_path):
     config_path = tmp_path / "readmegen.config.json"
     config_path.write_text("{invalid json}", encoding="utf-8")
     from projectreadmegen.exceptions import ConfigurationError
+
     with pytest.raises(ConfigurationError):
         load_config(str(tmp_path))
 
@@ -49,14 +50,17 @@ def test_load_config_non_dict_json(tmp_path):
     config_path = tmp_path / "readmegen.config.json"
     config_path.write_text('["list", "not", "dict"]', encoding="utf-8")
     from projectreadmegen.exceptions import ConfigurationError
+
     with pytest.raises(ConfigurationError, match="expected dict"):
         load_config(str(tmp_path))
 
 
 def test_load_config_io_error(tmp_path, monkeypatch):
     from projectreadmegen.exceptions import ConfigurationError
+
     def broken_open(*args, **kwargs):
         raise OSError("Permission denied")
+
     monkeypatch.setattr("builtins.open", broken_open)
     config_path = tmp_path / "readmegen.config.json"
     config_path.write_text('{"template": "full"}', encoding="utf-8")

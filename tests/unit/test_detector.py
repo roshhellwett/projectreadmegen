@@ -17,14 +17,14 @@ class TestDetector:
             "dirs": ["tests", "src"],
             "file_extensions": [".py", ".txt"],
             "name": "my-python-bot",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert "Python" in result["languages"]
         assert result["primary_lang"] == "Python"
-    
+
     def test_detect_cpp_project(self):
         """Test detection of C++ project."""
         scan_result = {
@@ -32,14 +32,14 @@ class TestDetector:
             "dirs": ["src", "include"],
             "file_extensions": [".cpp", ".txt"],
             "name": "cpp-app",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert "C++" in result["languages"]
         assert result["primary_lang"] == "C++"
-    
+
     def test_detect_typescript_project(self):
         """Test detection of TypeScript project."""
         scan_result = {
@@ -47,14 +47,14 @@ class TestDetector:
             "dirs": ["src", "components"],
             "file_extensions": [".ts", ".json"],
             "name": "web-app",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert "TypeScript" in result["languages"]
         assert result["primary_lang"] == "TypeScript"
-    
+
     def test_detect_telegram_bot(self):
         """Test detection of telegram bot project."""
         scan_result = {
@@ -62,13 +62,13 @@ class TestDetector:
             "dirs": ["tests"],
             "file_extensions": [".py", ".txt"],
             "name": "telegram-bot",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert result["project_type"] == "telegram-bot"
-    
+
     def test_detect_web_app(self):
         """Test detection of web application."""
         scan_result = {
@@ -76,11 +76,11 @@ class TestDetector:
             "dirs": ["src", "public", "components"],
             "file_extensions": [".json", ".html", ".ts"],
             "name": "my-web-app",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert result["project_type"] == "web-app"
 
     def test_detect_vite_config_as_web_app(self):
@@ -90,7 +90,7 @@ class TestDetector:
             "dirs": ["src"],
             "file_extensions": [".ts", ".json", ".html"],
             "name": "vite-app",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
 
         result = detect_stack(scan_result)
@@ -104,13 +104,13 @@ class TestDetector:
             "dirs": ["src"],
             "file_extensions": [".json", ".yaml"],
             "name": "pnpm-app",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
 
         result = detect_stack(scan_result)
 
         assert result["install_cmd"] == "pnpm install"
-    
+
     def test_detect_cli_tool(self):
         """Test detection of CLI tool."""
         scan_result = {
@@ -118,13 +118,13 @@ class TestDetector:
             "dirs": ["tests"],
             "file_extensions": [".py", ".txt"],
             "name": "my-cli-tool",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert result["project_type"] == "cli-tool"
-    
+
     def test_detect_has_tests(self):
         """Test that has_tests is detected correctly."""
         scan_result = {
@@ -132,13 +132,13 @@ class TestDetector:
             "dirs": ["tests", "src"],
             "file_extensions": [".py"],
             "name": "test-project",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert result["has_tests"] is True
-    
+
     def test_detect_has_docs(self):
         """Test that has_docs is detected correctly."""
         scan_result = {
@@ -146,11 +146,11 @@ class TestDetector:
             "dirs": ["docs", "src"],
             "file_extensions": [".py"],
             "name": "doc-project",
-            "root": "/path/to/project"
+            "root": "/path/to/project",
         }
-        
+
         result = detect_stack(scan_result)
-        
+
         assert result["has_docs"] is True
 
 

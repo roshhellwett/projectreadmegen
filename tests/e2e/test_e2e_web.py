@@ -18,9 +18,16 @@ def test_e2e_web_scan_and_generate_lifecycle(tmp_path: Path, monkeypatch):
     # Create sample project structure inside temporary directory
     (tmp_path / "src").mkdir()
     (tmp_path / "tests").mkdir()
-    (tmp_path / "src" / "index.js").write_text("console.log('Hello Web E2E Studio');\n", encoding="utf-8")
-    (tmp_path / "package.json").write_text('{"name": "web-studio-test", "scripts": {"test": "jest"}}\n', encoding="utf-8")
-    (tmp_path / "index.html").write_text("<!DOCTYPE html><html><head><title>App</title></head><body><div id='root'></div></body></html>\n", encoding="utf-8")
+    (tmp_path / "src" / "index.js").write_text(
+        "console.log('Hello Web E2E Studio');\n", encoding="utf-8"
+    )
+    (tmp_path / "package.json").write_text(
+        '{"name": "web-studio-test", "scripts": {"test": "jest"}}\n', encoding="utf-8"
+    )
+    (tmp_path / "index.html").write_text(
+        "<!DOCTYPE html><html><head><title>App</title></head><body><div id='root'></div></body></html>\n",
+        encoding="utf-8",
+    )
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "api.md").write_text("# API Docs\n", encoding="utf-8")
 
@@ -46,7 +53,9 @@ def test_e2e_web_scan_and_generate_lifecycle(tmp_path: Path, monkeypatch):
                 "template": template_choice,
             },
         )
-        assert gen_res.status_code == 200, f"Generate {template_choice} failed: {gen_res.text}"
+        assert (
+            gen_res.status_code == 200
+        ), f"Generate {template_choice} failed: {gen_res.text}"
         readme_text = gen_res.json().get("readme", "")
         assert "# " in readme_text
         if template_choice in ["standard", "full"]:
@@ -54,7 +63,9 @@ def test_e2e_web_scan_and_generate_lifecycle(tmp_path: Path, monkeypatch):
 
     # Step 3: POST /api/generate-ai (mocked API call for reliable E2E execution)
     monkeypatch.setattr(usagetracker, "check_api_key", lambda: True)
-    monkeypatch.setattr(usagetracker, "get_api_key", lambda: "gsk_mockede2ekey1234567890abcdef123456")
+    monkeypatch.setattr(
+        usagetracker, "get_api_key", lambda: "gsk_mockede2ekey1234567890abcdef123456"
+    )
     monkeypatch.setattr(
         grok.GrokClient,
         "generate_readme",
@@ -75,9 +86,18 @@ def test_e2e_web_scan_and_generate_lifecycle(tmp_path: Path, monkeypatch):
 def test_e2e_web_github_profile_presets(monkeypatch):
     """E2E Test: GitHub Profile endpoint across all 4 style presets."""
     monkeypatch.setattr(usagetracker, "check_api_key", lambda: True)
-    monkeypatch.setattr(usagetracker, "get_api_key", lambda: "gsk_mockede2ekey1234567890abcdef123456")
-    user_mock = lambda *a, **kw: {"name": "Rosh Hellwett", "bio": "E2E Web Architect", "public_repos": 128}
-    repos_mock = lambda *a, **kw: [{"name": "projectreadmegen", "language": "Python"}, {"name": "studio-ui", "language": "TypeScript"}]
+    monkeypatch.setattr(
+        usagetracker, "get_api_key", lambda: "gsk_mockede2ekey1234567890abcdef123456"
+    )
+    user_mock = lambda *a, **kw: {
+        "name": "Rosh Hellwett",
+        "bio": "E2E Web Architect",
+        "public_repos": 128,
+    }
+    repos_mock = lambda *a, **kw: [
+        {"name": "projectreadmegen", "language": "Python"},
+        {"name": "studio-ui", "language": "TypeScript"},
+    ]
     stats_mock = lambda *a, **kw: {"Python": 70.0, "TypeScript": 30.0}
     monkeypatch.setattr(github_profile, "fetch_github_user", user_mock)
     monkeypatch.setattr(server, "fetch_github_user", user_mock)
@@ -85,7 +105,9 @@ def test_e2e_web_github_profile_presets(monkeypatch):
     monkeypatch.setattr(server, "fetch_user_repos", repos_mock)
     monkeypatch.setattr(github_profile, "calculate_language_stats", stats_mock)
     monkeypatch.setattr(server, "calculate_language_stats", stats_mock)
-    profile_gen_mock = lambda **kwargs: f"# @{kwargs['username']} — {kwargs['style'].upper()} Preset\n\nBio: {kwargs['user_data']['bio']}\n"
+    profile_gen_mock = (
+        lambda **kwargs: f"# @{kwargs['username']} — {kwargs['style'].upper()} Preset\n\nBio: {kwargs['user_data']['bio']}\n"
+    )
     monkeypatch.setattr(github_profile, "generate_readme_content", profile_gen_mock)
     monkeypatch.setattr(server, "generate_profile_readme_content", profile_gen_mock)
 

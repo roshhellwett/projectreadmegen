@@ -24,7 +24,9 @@ def _is_skipped_file(filename: str) -> bool:
 
 
 def _is_skipped_dir(dirname: str) -> bool:
-    return dirname.startswith(".") or any(fnmatch(dirname, pattern) for pattern in SKIP_DIRS)
+    return dirname.startswith(".") or any(
+        fnmatch(dirname, pattern) for pattern in SKIP_DIRS
+    )
 
 
 def _get_dir_hash(root: Path, max_depth: int | None = None) -> str:
@@ -45,9 +47,8 @@ def _get_dir_hash(root: Path, max_depth: int | None = None) -> str:
 
             for f in sorted(filenames):
                 if (
-                    (not f.startswith(".") or f in [".gitignore", ".env.example"])
-                    and not _is_skipped_file(f)
-                ):
+                    not f.startswith(".") or f in [".gitignore", ".env.example"]
+                ) and not _is_skipped_file(f):
                     fpath = Path(dirpath) / f
                     try:
                         mtime = fpath.stat().st_mtime
@@ -131,6 +132,7 @@ def scan_directory(
 
     # Check for symlink attacks (circular symlinks)
     from projectreadmegen.utils import is_symlink_chain
+
     if is_symlink_chain(root):
         raise InvalidPathError(
             f"Symlink chain or circular reference detected: {root}",
@@ -287,19 +289,22 @@ def _build_tree(
 def _build_graph_data(root: Path, max_depth: int | None = 3) -> dict:
     """Build structured nodes and edges for visual mind map / graph rendering."""
     import re
+
     nodes = []
     edges = []
     node_ids = set()
 
     root_id = "root"
-    nodes.append({
-        "id": root_id,
-        "label": root.name,
-        "type": "root",
-        "path": "",
-        "depth": 0,
-        "summary": f"Project Root ({root.name})"
-    })
+    nodes.append(
+        {
+            "id": root_id,
+            "label": root.name,
+            "type": "root",
+            "path": "",
+            "depth": 0,
+            "summary": f"Project Root ({root.name})",
+        }
+    )
     node_ids.add(root_id)
 
     dir_count = 0
@@ -307,7 +312,10 @@ def _build_graph_data(root: Path, max_depth: int | None = 3) -> dict:
     import_edges = 0
     MAX_GRAPH_NODES = 400
 
-    js_import_re = re.compile(r'^\s*(?:import\s+.*from\s+[\'"]([^\'"]+)[\'"]|require\([\'"]([^\'"]+)[\'"]\))', re.MULTILINE)
+    js_import_re = re.compile(
+        r'^\s*(?:import\s+.*from\s+[\'"]([^\'"]+)[\'"]|require\([\'"]([^\'"]+)[\'"]\))',
+        re.MULTILINE,
+    )
 
     for dirpath, dirnames, filenames in os.walk(root):
         if len(nodes) >= MAX_GRAPH_NODES:
@@ -324,29 +332,34 @@ def _build_graph_data(root: Path, max_depth: int | None = 3) -> dict:
 
         if dir_id not in node_ids and dir_id != root_id:
             parent_rel = rel_dir.parent
-            parent_id = root_id if str(parent_rel) == "." else f"dir:{parent_rel.as_posix()}"
-            nodes.append({
-                "id": dir_id,
-                "label": rel_dir.name,
-                "type": "dir",
-                "path": rel_dir.as_posix(),
-                "depth": current_depth,
-                "parent": parent_id,
-                "summary": f"Directory ({rel_dir.name})"
-            })
+            parent_id = (
+                root_id if str(parent_rel) == "." else f"dir:{parent_rel.as_posix()}"
+            )
+            nodes.append(
+                {
+                    "id": dir_id,
+                    "label": rel_dir.name,
+                    "type": "dir",
+                    "path": rel_dir.as_posix(),
+                    "depth": current_depth,
+                    "parent": parent_id,
+                    "summary": f"Directory ({rel_dir.name})",
+                }
+            )
             node_ids.add(dir_id)
             if parent_id in node_ids:
-                edges.append({
-                    "source": parent_id,
-                    "target": dir_id,
-                    "relation": "contains"
-                })
+                edges.append(
+                    {"source": parent_id, "target": dir_id, "relation": "contains"}
+                )
             dir_count += 1
 
         for filename in sorted(filenames):
             if len(nodes) >= MAX_GRAPH_NODES:
                 break
-            if filename.startswith(".") and filename not in [".gitignore", ".env.example"]:
+            if filename.startswith(".") and filename not in [
+                ".gitignore",
+                ".env.example",
+            ]:
                 continue
             if _is_skipped_file(filename):
                 continue
@@ -358,7 +371,18 @@ def _build_graph_data(root: Path, max_depth: int | None = 3) -> dict:
 
             ext = rel_file.suffix.lower()
             node_type = "file"
-            if ext in [".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".rs", ".java", ".cpp", ".c"]:
+            if ext in [
+                ".py",
+                ".js",
+                ".ts",
+                ".jsx",
+                ".tsx",
+                ".go",
+                ".rs",
+                ".java",
+                ".cpp",
+                ".c",
+            ]:
                 node_type = "module"
             elif ext in [".json", ".toml", ".yaml", ".yml", ".ini", ".env", ".cfg"]:
                 node_type = "config"
@@ -375,53 +399,71 @@ def _build_graph_data(root: Path, max_depth: int | None = 3) -> dict:
             except Exception:
                 pass
 
-            nodes.append({
-                "id": file_id,
-                "label": filename,
-                "type": node_type,
-                "path": rel_file.as_posix(),
-                "depth": current_depth + 1,
-                "parent": dir_id,
-                "size_bytes": size_bytes,
-                "summary": f"{node_type.upper()} ({size_bytes} B)"
-            })
+            nodes.append(
+                {
+                    "id": file_id,
+                    "label": filename,
+                    "type": node_type,
+                    "path": rel_file.as_posix(),
+                    "depth": current_depth + 1,
+                    "parent": dir_id,
+                    "size_bytes": size_bytes,
+                    "summary": f"{node_type.upper()} ({size_bytes} B)",
+                }
+            )
             node_ids.add(file_id)
-            edges.append({
-                "source": dir_id,
-                "target": file_id,
-                "relation": "contains"
-            })
+            edges.append({"source": dir_id, "target": file_id, "relation": "contains"})
             file_count += 1
 
             if node_type == "module" and size_bytes < 100_000:
                 try:
-                    content = (root / rel_file).read_text(encoding="utf-8", errors="ignore")
+                    content = (root / rel_file).read_text(
+                        encoding="utf-8", errors="ignore"
+                    )
                     if ext == ".py":
                         for line in content.splitlines()[:60]:
                             if "import " in line:
                                 for other_node in nodes:
-                                    if other_node["type"] == "module" and other_node["id"] != file_id:
+                                    if (
+                                        other_node["type"] == "module"
+                                        and other_node["id"] != file_id
+                                    ):
                                         stem = Path(other_node["label"]).stem
-                                        if f"import {stem}" in line or f"from {stem}" in line or f".{stem}" in line or f"projectreadmegen.{stem}" in line:
-                                            edges.append({
-                                                "source": file_id,
-                                                "target": other_node["id"],
-                                                "relation": "imports"
-                                            })
+                                        if (
+                                            f"import {stem}" in line
+                                            or f"from {stem}" in line
+                                            or f".{stem}" in line
+                                            or f"projectreadmegen.{stem}" in line
+                                        ):
+                                            edges.append(
+                                                {
+                                                    "source": file_id,
+                                                    "target": other_node["id"],
+                                                    "relation": "imports",
+                                                }
+                                            )
                                             import_edges += 1
                     elif ext in [".js", ".ts", ".jsx", ".tsx"]:
                         for line in content.splitlines()[:60]:
                             for match in js_import_re.findall(line):
                                 imp_path = match[0] or match[1]
-                                if imp_path.startswith("./") or imp_path.startswith("../"):
+                                if imp_path.startswith("./") or imp_path.startswith(
+                                    "../"
+                                ):
                                     imp_name = Path(imp_path).name
                                     for other_node in nodes:
-                                        if other_node["id"] != file_id and (other_node["label"] == imp_name or Path(other_node["label"]).stem == imp_name):
-                                            edges.append({
-                                                "source": file_id,
-                                                "target": other_node["id"],
-                                                "relation": "imports"
-                                            })
+                                        if other_node["id"] != file_id and (
+                                            other_node["label"] == imp_name
+                                            or Path(other_node["label"]).stem
+                                            == imp_name
+                                        ):
+                                            edges.append(
+                                                {
+                                                    "source": file_id,
+                                                    "target": other_node["id"],
+                                                    "relation": "imports",
+                                                }
+                                            )
                                             import_edges += 1
                 except Exception:
                     pass
@@ -434,14 +476,13 @@ def _build_graph_data(root: Path, max_depth: int | None = 3) -> dict:
             "total_edges": len(edges),
             "dir_count": dir_count,
             "file_count": file_count,
-            "import_connections": import_edges
-        }
+            "import_connections": import_edges,
+        },
     }
 
 
 # Backwards-compatible re-export: load_config now lives in config.py
 from projectreadmegen.config import load_config  # noqa: F401, E402
-
 
 if __name__ == "__main__":
     import sys
@@ -452,4 +493,3 @@ if __name__ == "__main__":
     print(f"Files found: {len(result['files'])}")
     print(f"Extensions: {result['file_extensions']}")
     print(f"\nTree:\n{result['tree']}")
-

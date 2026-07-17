@@ -17,8 +17,12 @@ def test_e2e_cli_generate_workflow(tmp_path: Path):
     """E2E Test: Full scan and README generation on a sample project structure."""
     # Create sample project structure inside temporary directory
     (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "app.py").write_text("print('Hello E2E Studio')\n", encoding="utf-8")
-    (tmp_path / "requirements.txt").write_text("typer>=0.12\nfastapi>=0.100\n", encoding="utf-8")
+    (tmp_path / "src" / "app.py").write_text(
+        "print('Hello E2E Studio')\n", encoding="utf-8"
+    )
+    (tmp_path / "requirements.txt").write_text(
+        "typer>=0.12\nfastapi>=0.100\n", encoding="utf-8"
+    )
     (tmp_path / "README.md").write_text("# Old Readme to Overwrite\n", encoding="utf-8")
 
     # Execute CLI generate workflow
@@ -51,7 +55,11 @@ def test_e2e_cli_profile_workflow(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         cli.github_profile,
         "fetch_github_user",
-        lambda u, t: {"name": "Rosh Hellwett", "bio": "E2E Studio Creator", "public_repos": 42},
+        lambda u, t: {
+            "name": "Rosh Hellwett",
+            "bio": "E2E Studio Creator",
+            "public_repos": 42,
+        },
     )
     monkeypatch.setattr(
         cli.github_profile,
@@ -99,7 +107,9 @@ def test_e2e_cli_config_and_status_sync():
 
     try:
         # Set credentials via CLI
-        cfg_res = runner.invoke(cli.app, ["config", "--key", test_key, "--token", test_token])
+        cfg_res = runner.invoke(
+            cli.app, ["config", "--key", test_key, "--token", test_token]
+        )
         assert cfg_res.exit_code == 0
         assert "Groq API Key persisted atomically" in cfg_res.stdout
         assert "GitHub API Token persisted atomically" in cfg_res.stdout

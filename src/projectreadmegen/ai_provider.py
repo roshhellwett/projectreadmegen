@@ -34,7 +34,9 @@ class GroqClient:
         if not self.api_key:
             logger.warning("No GROQ_API_KEY provided")
         else:
-            self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, timeout=timeout)
+            self.client = OpenAI(
+                api_key=self.api_key, base_url=self.base_url, timeout=timeout
+            )
 
     def generate_readme(
         self,
@@ -69,13 +71,17 @@ class GroqClient:
             )
 
         if max_tokens < 100 or max_tokens > 8000:
-            logger.warning(f"max_tokens {max_tokens} outside recommended range, clamping to valid range")
+            logger.warning(
+                f"max_tokens {max_tokens} outside recommended range, clamping to valid range"
+            )
             max_tokens = max(100, min(8000, max_tokens))
 
         # Retry logic
         for attempt in range(MAX_RETRIES):
             try:
-                logger.info(f"Calling Groq API (attempt {attempt + 1}/{MAX_RETRIES})...")
+                logger.info(
+                    f"Calling Groq API (attempt {attempt + 1}/{MAX_RETRIES})..."
+                )
 
                 response = self.client.chat.completions.create(
                     model=model,
@@ -99,7 +105,9 @@ class GroqClient:
                         "The API returned empty content. Please try again.",
                     )
 
-                logger.info(f"Successfully generated README ({len(content)} characters)")
+                logger.info(
+                    f"Successfully generated README ({len(content)} characters)"
+                )
                 return content
 
             except APITimeoutError as e:
@@ -126,8 +134,10 @@ class GroqClient:
                 # Check for rate limiting
                 if "rate" in str(e).lower() or getattr(e, "status_code", None) == 429:
                     if attempt < MAX_RETRIES - 1:
-                        wait_time = RETRY_DELAY * (2 ** attempt)  # Exponential backoff
-                        logger.warning(f"Rate limited, waiting {wait_time}s before retry...")
+                        wait_time = RETRY_DELAY * (2**attempt)  # Exponential backoff
+                        logger.warning(
+                            f"Rate limited, waiting {wait_time}s before retry..."
+                        )
                         time.sleep(wait_time)
                     else:
                         raise CustomAPIError(
@@ -142,7 +152,9 @@ class GroqClient:
                     )
 
             except Exception as e:
-                logger.error(f"Unexpected error calling Groq API: {type(e).__name__}: {e}")
+                logger.error(
+                    f"Unexpected error calling Groq API: {type(e).__name__}: {e}"
+                )
                 raise CustomAPIError(
                     f"Unexpected error: {e}",
                     f"An unexpected error occurred: {str(e)[:100]}",
@@ -165,33 +177,50 @@ class GroqClient:
 
         for attempt in range(MAX_RETRIES):
             try:
-                logger.info(f"Calling AI Graph Chat API (attempt {attempt + 1}/{MAX_RETRIES})...")
+                logger.info(
+                    f"Calling AI Graph Chat API (attempt {attempt + 1}/{MAX_RETRIES})..."
+                )
                 response = self.client.chat.completions.create(
                     model=model,
                     messages=messages,
                     max_tokens=max_tokens,
                 )
                 if not response.choices or not response.choices[0].message:
-                    raise CustomAPIError("Empty response from AI API", "The API returned an empty response.")
+                    raise CustomAPIError(
+                        "Empty response from AI API",
+                        "The API returned an empty response.",
+                    )
                 content = response.choices[0].message.content
                 return content or ""
             except (APITimeoutError, APIConnectionError) as e:
                 if attempt < MAX_RETRIES - 1:
-                    logger.warning(f"Connection/timeout error, retrying in {RETRY_DELAY}s...")
+                    logger.warning(
+                        f"Connection/timeout error, retrying in {RETRY_DELAY}s..."
+                    )
                     time.sleep(RETRY_DELAY)
                 else:
-                    raise CustomAPIError(f"Cannot connect to AI API: {e}", "Could not connect to the API after retries.")
+                    raise CustomAPIError(
+                        f"Cannot connect to AI API: {e}",
+                        "Could not connect to the API after retries.",
+                    )
             except APIError as e:
                 if "rate" in str(e).lower() or getattr(e, "status_code", None) == 429:
                     if attempt < MAX_RETRIES - 1:
-                        time.sleep(RETRY_DELAY * (2 ** attempt))
+                        time.sleep(RETRY_DELAY * (2**attempt))
                     else:
-                        raise CustomAPIError(f"Rate limited: {e}", "API rate limit exceeded. Please wait and try again.")
+                        raise CustomAPIError(
+                            f"Rate limited: {e}",
+                            "API rate limit exceeded. Please wait and try again.",
+                        )
                 else:
-                    raise CustomAPIError(f"AI API error: {e}", f"API error: {str(e)[:100]}")
+                    raise CustomAPIError(
+                        f"AI API error: {e}", f"API error: {str(e)[:100]}"
+                    )
             except Exception as e:
                 logger.error(f"Unexpected error in Graph Chat: {e}")
-                raise CustomAPIError(f"Unexpected error: {e}", f"Unexpected error: {str(e)[:100]}")
+                raise CustomAPIError(
+                    f"Unexpected error: {e}", f"Unexpected error: {str(e)[:100]}"
+                )
 
 
 # ---------------------------------------------------------------------------

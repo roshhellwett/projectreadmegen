@@ -1,6 +1,10 @@
 from unittest.mock import MagicMock, patch
 import pytest
-from projectreadmegen.ai_provider import GroqClient, build_project_context, generate_ai_readme
+from projectreadmegen.ai_provider import (
+    GroqClient,
+    build_project_context,
+    generate_ai_readme,
+)
 from projectreadmegen.exceptions import APIError as CustomAPIError
 
 
@@ -42,13 +46,16 @@ def test_groq_client_success():
     mock_client.chat.completions.create.return_value = mock_response
     client = GroqClient(api_key="gsk_test")
     client.client = mock_client
-    result = client.generate_readme(project_context="Project context", system_prompt="Write a README")
+    result = client.generate_readme(
+        project_context="Project context", system_prompt="Write a README"
+    )
     assert "# Generated README" in result
 
 
 def test_groq_client_retry_then_success():
     mock_client = MagicMock()
     from openai import APITimeoutError
+
     mock_client.chat.completions.create.side_effect = [
         APITimeoutError("timeout"),
         APITimeoutError("timeout"),
@@ -107,15 +114,30 @@ def test_generate_ai_readme_no_key():
 
 def test_generate_ai_readme_invalid_data():
     with pytest.raises(CustomAPIError, match="Invalid scan"):
-        generate_ai_readme("not a dict", {"primary_lang": "Python"}, {"groq_api_key": "gsk_test"})
+        generate_ai_readme(
+            "not a dict", {"primary_lang": "Python"}, {"groq_api_key": "gsk_test"}
+        )
 
 
 @patch("projectreadmegen.ai_provider.GroqClient.generate_readme")
 def test_generate_ai_readme_success(mock_gen):
     mock_gen.return_value = "# AI README"
     result = generate_ai_readme(
-        {"name": "test", "files": ["a.py"], "dirs": [], "tree": "", "has_license": False, "has_contributing": False},
-        {"project_type": "app", "primary_lang": "Python", "languages": ["Python"], "install_cmd": "", "run_cmd": ""},
+        {
+            "name": "test",
+            "files": ["a.py"],
+            "dirs": [],
+            "tree": "",
+            "has_license": False,
+            "has_contributing": False,
+        },
+        {
+            "project_type": "app",
+            "primary_lang": "Python",
+            "languages": ["Python"],
+            "install_cmd": "",
+            "run_cmd": "",
+        },
         {"groq_api_key": "gsk_test"},
     )
     assert result == "# AI README"

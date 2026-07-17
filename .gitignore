@@ -39,9 +39,17 @@ desktop.ini
 # Local project usage data (may appear in working dir during dev)
 projectreadmegen_usage.json
 projectreadmegen_cache.json
-+projectreadmegen_usage.json
-+projectreadmegen_cache.json
 
 # Backup files (created by utils.safe_create_backup)
 *.backup
-node_modules
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Sample folder (unused test artifact)
+Sample/
+
+# ROS (skill tool runner) logs
+*.ros.log

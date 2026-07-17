@@ -27,7 +27,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     overlay?.classList.toggle('open');
   }
 
-  hamburgerBtn?.addEventListener('click', (e) => { e.stopPropagation(); toggleSidebar(); });
+  hamburgerBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSidebar();
+  });
   overlay?.addEventListener('click', closeSidebar);
 
   document.addEventListener('keydown', (e) => {
@@ -40,13 +43,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let currentTabId = 'tab-scanner';
 
-  navBtns.forEach(btn => {
+  navBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const targetTabId = btn.getAttribute('data-tab');
-      if (targetTabId === currentTabId) { closeSidebar(); return; }
+      if (targetTabId === currentTabId) {
+        closeSidebar();
+        return;
+      }
 
-      navBtns.forEach(b => b.classList.remove('active'));
-      tabPanes.forEach(p => p.classList.remove('active'));
+      navBtns.forEach((b) => b.classList.remove('active'));
+      tabPanes.forEach((p) => p.classList.remove('active'));
 
       btn.classList.add('active');
       const targetPane = document.getElementById(targetTabId);
@@ -80,6 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btnGitLoad = document.getElementById('btn-git-load');
         if (svg && svg.querySelector('.empty-mindmap') && btnGitLoad) {
           btnGitLoad.click();
+        }
+      } else if (targetTabId === 'tab-skills') {
+        const skPath = document.getElementById('skills-path');
+        const sPath = document.getElementById('scanner-path');
+        if (skPath && sPath && (!skPath.value || skPath.value === '.')) {
+          if (sPath.value && sPath.value !== '.') skPath.value = sPath.value;
         }
       }
 

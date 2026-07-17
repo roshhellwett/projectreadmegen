@@ -85,17 +85,29 @@ def handle_launch_web(port: int = 8000, host: str = "127.0.0.1"):
     import uvicorn
     from projectreadmegen.server import app as web_app
 
-    console.print(f"\n[bold white]Launching Project README Gen Web UI Studio...[/bold white]")
-    console.print(f"[dim]Studio accessible at:[/dim] [bold blue]http://{host}:{port}[/bold blue]")
+    console.print(
+        f"\n[bold white]Launching Project README Gen Web UI Studio...[/bold white]"
+    )
+    console.print(
+        f"[dim]Studio accessible at:[/dim] [bold blue]http://{host}:{port}[/bold blue]"
+    )
     console.print("[dim]Press Ctrl+C to stop the server and return to menu[/dim]\n")
     try:
         uvicorn.run(web_app, host=host, port=port, log_level="info")
     except KeyboardInterrupt:
         console.print("\n[dim]Web Studio server stopped. Returning to menu...[/dim]\n")
     except OSError as e:
-        if "address is already in use" in str(e).lower() or "only one usage of each socket address" in str(e).lower() or getattr(e, "errno", None) in (48, 98, 10048):
-            console.print(f"\n[bold yellow][!] Port {port} is currently busy or already in use.[/bold yellow]")
-            console.print(f"[dim]Fallback Solution:[/dim] Try running on another port from terminal using: [bold white]python -m projectreadmegen web --port {port + 1}[/bold white]\n")
+        if (
+            "address is already in use" in str(e).lower()
+            or "only one usage of each socket address" in str(e).lower()
+            or getattr(e, "errno", None) in (48, 98, 10048)
+        ):
+            console.print(
+                f"\n[bold yellow][!] Port {port} is currently busy or already in use.[/bold yellow]"
+            )
+            console.print(
+                f"[dim]Fallback Solution:[/dim] Try running on another port from terminal using: [bold white]python -m projectreadmegen web --port {port + 1}[/bold white]\n"
+            )
         else:
             console.print(f"\n[red][-] Server Error: {e}[/red]\n")
         input("Press Enter to return to menu...")
@@ -170,10 +182,16 @@ def handle_manage_api():
             console.print("[dim]No key provided. Operation cancelled.[/dim]")
         elif key.startswith("gsk_") and len(key) > 10:
             usagetracker.save_api_key(key)
-            console.print("[bold white][+] API key updated and synced atomically across CLI & Web Studio.[/bold white]")
+            console.print(
+                "[bold white][+] API key updated and synced atomically across CLI & Web Studio.[/bold white]"
+            )
         else:
-            console.print("[red][-] Invalid key format. Key should start with 'gsk_' and exceed 10 characters.[/red]")
-            console.print("[dim]Obtain your API key at: https://console.groq.com/keys[/dim]")
+            console.print(
+                "[red][-] Invalid key format. Key should start with 'gsk_' and exceed 10 characters.[/red]"
+            )
+            console.print(
+                "[dim]Obtain your API key at: https://console.groq.com/keys[/dim]"
+            )
         input("\nPress Enter to continue...")
     elif has_key and choice == "2":
         usagetracker.clear_api_key()
@@ -193,9 +211,13 @@ def handle_manage_api():
             console.print("[dim]No key provided. Operation cancelled.[/dim]")
         elif key.startswith("gsk_") and len(key) > 10:
             usagetracker.save_api_key(key)
-            console.print("[bold white][+] API key configured and synced atomically across CLI & Web Studio.[/bold white]")
+            console.print(
+                "[bold white][+] API key configured and synced atomically across CLI & Web Studio.[/bold white]"
+            )
         else:
-            console.print("[red][-] Invalid key format. Key should start with 'gsk_' and exceed 10 characters.[/red]")
+            console.print(
+                "[red][-] Invalid key format. Key should start with 'gsk_' and exceed 10 characters.[/red]"
+            )
         input("\nPress Enter to continue...")
     elif not has_key and choice == "2":
         handle_github_token_settings()
@@ -302,7 +324,9 @@ def handle_github_token_settings():
         token = input("\n> Paste GitHub token (Enter to cancel): ").strip()
         if token:
             usagetracker.save_github_token(token)
-            console.print("[bold white][+] GitHub token configured and persisted.[/bold white]")
+            console.print(
+                "[bold white][+] GitHub token configured and persisted.[/bold white]"
+            )
         else:
             console.print("[dim]Operation cancelled.[/dim]")
         input("\nPress Enter to continue...")
@@ -335,7 +359,9 @@ To generate an AI-synthesized GitHub Profile README, an active Groq API key is r
         key = input("\n> Paste Groq API key: ").strip()
         if key and key.startswith("gsk_"):
             usagetracker.save_api_key(key)
-            console.print("[bold white][+] API key saved and shared across CLI & Web Studio.[/bold white]\n")
+            console.print(
+                "[bold white][+] API key saved and shared across CLI & Web Studio.[/bold white]\n"
+            )
         else:
             console.print("[red][-] Invalid key format. Operation cancelled.[/red]")
             input("\nPress Enter to continue...")
@@ -425,11 +451,13 @@ To generate an AI-synthesized GitHub Profile README, an active Groq API key is r
     )
 
     if not github_token:
-        console.print("""
+        console.print(
+            """
 [bold white]GitHub API Token (Optional Enhancement)[/bold white]
 [dim]Configuring a token expands rate limits and enables precise language usage calculations.[/dim]
 
-[bold white]Press Enter to proceed without token[/bold white], or type 'y' to configure now:""")
+[bold white]Press Enter to proceed without token[/bold white], or type 'y' to configure now:"""
+        )
         add_token = input().strip().lower()
         if add_token == "y":
             console.print("""
@@ -441,9 +469,13 @@ To generate an AI-synthesized GitHub Profile README, an active Groq API key is r
             if token:
                 github_token = token
                 usagetracker.save_github_token(token)
-                console.print("[bold white][+] Token persisted and active.[/bold white]\n")
+                console.print(
+                    "[bold white][+] Token persisted and active.[/bold white]\n"
+                )
 
-    console.print("\n[bold white][*] Fetching REST metrics from GitHub API...[/bold white]")
+    console.print(
+        "\n[bold white][*] Fetching REST metrics from GitHub API...[/bold white]"
+    )
 
     user_data = None
     repos = []
@@ -455,7 +487,9 @@ To generate an AI-synthesized GitHub Profile README, an active Groq API key is r
             console.print(
                 f"[yellow][!] Could not query profile metadata for @{username}[/yellow]"
             )
-            console.print("[dim]Proceeding with deterministic profile structure.[/dim]\n")
+            console.print(
+                "[dim]Proceeding with deterministic profile structure.[/dim]\n"
+            )
     except Exception as e:
         console.print(f"[yellow][!] GitHub query fallback triggered: {str(e)}[/yellow]")
         console.print("[dim]Proceeding with structural fallback engine...[/dim]\n")
@@ -465,16 +499,22 @@ To generate an AI-synthesized GitHub Profile README, an active Groq API key is r
             repos = github_profile.fetch_user_repos(username, github_token)
             languages = github_profile.calculate_language_stats(repos)
         except Exception as e:
-            console.print(f"[yellow][!] Repository inspection fallback: {str(e)}[/yellow]")
+            console.print(
+                f"[yellow][!] Repository inspection fallback: {str(e)}[/yellow]"
+            )
 
-    console.print(f"[bold white][+] Indexed {len(repos)} public repositories[/bold white]")
+    console.print(
+        f"[bold white][+] Indexed {len(repos)} public repositories[/bold white]"
+    )
     if languages:
         top_langs = list(languages.items())[:5]
         console.print(
             f"[dim]Top detected languages: {', '.join([lang[0] for lang in top_langs])}[/dim]\n"
         )
 
-    console.print(f"[bold white][*] Synthesizing {style} profile architecture...[/bold white]\n")
+    console.print(
+        f"[bold white][*] Synthesizing {style} profile architecture...[/bold white]\n"
+    )
 
     try:
         readme_content = github_profile.generate_readme_content(
@@ -533,7 +573,9 @@ def handle_update():
                 if exe_path_str:
                     exe_path = Path(exe_path_str)
                     if exe_path.exists() and exe_path.suffix.lower() == ".exe":
-                        temp_old_exe = exe_path.with_name(f"projectreadmegen_old_{os.getpid()}.exe")
+                        temp_old_exe = exe_path.with_name(
+                            f"projectreadmegen_old_{os.getpid()}.exe"
+                        )
                         if temp_old_exe.exists():
                             try:
                                 temp_old_exe.unlink()
@@ -541,7 +583,9 @@ def handle_update():
                                 pass
                         exe_path.rename(temp_old_exe)
             except Exception as unlock_err:
-                console.print(f"[dim]Note: Could not rename active executable before upgrade: {unlock_err}[/dim]")
+                console.print(
+                    f"[dim]Note: Could not rename active executable before upgrade: {unlock_err}[/dim]"
+                )
 
         update_result = subprocess.run(
             ["pip", "install", "--upgrade", "projectreadmegen"],
@@ -551,7 +595,9 @@ def handle_update():
         )
 
         if update_result.returncode == 0:
-            console.print("[bold white][+] Upgrade completed successfully![/bold white]\n")
+            console.print(
+                "[bold white][+] Upgrade completed successfully![/bold white]\n"
+            )
             new_result = subprocess.run(
                 ["pip", "show", "projectreadmegen"],
                 capture_output=True,
@@ -561,7 +607,9 @@ def handle_update():
             for line in new_result.stdout.split("\n"):
                 if line.startswith("Version:"):
                     new_version = line.replace("Version:", "").strip()
-                    console.print(f"  Active version: [bold white]{new_version}[/bold white]\n")
+                    console.print(
+                        f"  Active version: [bold white]{new_version}[/bold white]\n"
+                    )
                     break
             if temp_old_exe and temp_old_exe.exists():
                 try:
@@ -571,17 +619,32 @@ def handle_update():
         else:
             if temp_old_exe and temp_old_exe.exists():
                 try:
-                    exe_path = Path(shutil.which("projectreadmegen") or str(temp_old_exe.with_name("projectreadmegen.exe")))
+                    exe_path = Path(
+                        shutil.which("projectreadmegen")
+                        or str(temp_old_exe.with_name("projectreadmegen.exe"))
+                    )
                     if not exe_path.exists():
                         temp_old_exe.rename(exe_path)
                 except Exception:
                     pass
-            console.print(f"[red][-] Upgrade encountered an issue:\n{update_result.stderr or update_result.stdout}[/red]")
-            if "WinError 32" in (update_result.stderr or "") or "access the file" in (update_result.stderr or ""):
-                console.print("\n[bold yellow]Windows Process Lock Detected[/bold yellow]")
-                console.print("[white]Because projectreadmegen.exe is currently active, Windows prevented pip from overwriting it.[/white]")
-                console.print("[bold cyan]To upgrade cleanly, close this terminal window and run:[/bold cyan]")
-                console.print("  [bold white]pip install --upgrade projectreadmegen[/bold white]\n")
+            console.print(
+                f"[red][-] Upgrade encountered an issue:\n{update_result.stderr or update_result.stdout}[/red]"
+            )
+            if "WinError 32" in (update_result.stderr or "") or "access the file" in (
+                update_result.stderr or ""
+            ):
+                console.print(
+                    "\n[bold yellow]Windows Process Lock Detected[/bold yellow]"
+                )
+                console.print(
+                    "[white]Because projectreadmegen.exe is currently active, Windows prevented pip from overwriting it.[/white]"
+                )
+                console.print(
+                    "[bold cyan]To upgrade cleanly, close this terminal window and run:[/bold cyan]"
+                )
+                console.print(
+                    "  [bold white]pip install --upgrade projectreadmegen[/bold white]\n"
+                )
 
     console.print("\n[bold cyan]Checking for updates...[/bold cyan]\n")
 
@@ -621,7 +684,9 @@ def handle_update():
                     break
         else:
             # Fallback: try pip install --upgrade --dry-run
-            console.print(f"  Current installed : [bold white]{current_version}[/bold white]")
+            console.print(
+                f"  Current installed : [bold white]{current_version}[/bold white]"
+            )
             console.print("[dim]Checking PyPI index for upgrades...[/dim]")
             dry_result = subprocess.run(
                 ["pip", "install", "--upgrade", "--dry-run", "projectreadmegen"],
@@ -634,24 +699,36 @@ def handle_update():
                 dry_result.returncode == 0
                 and "would be upgraded" in dry_result.stdout.lower()
             ):
-                console.print("[bold white][!] Newer package release detected on PyPI[/bold white]")
+                console.print(
+                    "[bold white][!] Newer package release detected on PyPI[/bold white]"
+                )
                 console.print("  Executing pip upgrade package...\n")
                 _safe_pip_upgrade()
             else:
-                console.print("[bold white][+] Current installation matches latest PyPI release[/bold white]\n")
+                console.print(
+                    "[bold white][+] Current installation matches latest PyPI release[/bold white]\n"
+                )
 
             input("Press Enter to continue...")
             return
 
-        console.print(f"  Current installed : [bold white]{current_version}[/bold white]")
-        console.print(f"  Latest on PyPI    : [bold white]{latest_version}[/bold white]\n")
+        console.print(
+            f"  Current installed : [bold white]{current_version}[/bold white]"
+        )
+        console.print(
+            f"  Latest on PyPI    : [bold white]{latest_version}[/bold white]\n"
+        )
 
         if current_version != latest_version and latest_version != "Unknown":
-            console.print("[bold white][!] Newer package release detected on PyPI[/bold white]")
+            console.print(
+                "[bold white][!] Newer package release detected on PyPI[/bold white]"
+            )
             console.print("  Executing pip upgrade package...\n")
             _safe_pip_upgrade()
         else:
-            console.print("[bold white][+] Current installation matches latest PyPI release[/bold white]\n")
+            console.print(
+                "[bold white][+] Current installation matches latest PyPI release[/bold white]\n"
+            )
 
     except Exception as e:
         console.print(f"[red][-] Diagnostic query failed: {e}[/red]\n")
@@ -665,13 +742,17 @@ def handle_generate_mode(ai=False, path="."):
 
         # Validate path
         if not root.exists():
-            console.print(f"[red][-] Target path '{path}' could not be resolved on disk.[/red]")
+            console.print(
+                f"[red][-] Target path '{path}' could not be resolved on disk.[/red]"
+            )
             console.print("[dim]  Verify directory structure or permissions.[/dim]")
             input("\nPress Enter to continue...")
             return
 
         if not root.is_dir():
-            console.print(f"[red][-] Target '{path}' is a file rather than a directory root.[/red]")
+            console.print(
+                f"[red][-] Target '{path}' is a file rather than a directory root.[/red]"
+            )
             console.print("[dim]  Provide the root project directory path.[/dim]")
             input("\nPress Enter to continue...")
             return
@@ -690,6 +771,7 @@ def handle_generate_mode(ai=False, path="."):
             config = load_config(str(root))
         except Exception as e:
             from projectreadmegen.exceptions import ProjectReadmeGenException
+
             if isinstance(e, ProjectReadmeGenException):
                 console.print("[red]✗ Configuration Error:[/red]")
                 console.print(f"[yellow]  {e.user_message}[/yellow]")
@@ -718,6 +800,7 @@ def handle_generate_mode(ai=False, path="."):
                     scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
                 except Exception as e:
                     from projectreadmegen.exceptions import ProjectReadmeGenException
+
                     if isinstance(e, ProjectReadmeGenException):
                         console.print(f"[red]✗ Scan Error: {e.user_message}[/red]")
                     else:
@@ -736,11 +819,16 @@ def handle_generate_mode(ai=False, path="."):
                         readme = grok.generate_ai_readme(scan, detection, config)
                         console.print("[green]✓ AI generation successful![/green]")
                     except Exception as ai_error:
-                        from projectreadmegen.exceptions import APIError as CustomAPIError
+                        from projectreadmegen.exceptions import (
+                            APIError as CustomAPIError,
+                        )
+
                         if isinstance(ai_error, CustomAPIError):
                             progress.stop()
                             console.print(f"[yellow]⚠ {ai_error.user_message}[/yellow]")
-                            console.print("[dim]Falling back to template-based generation...[/dim]")
+                            console.print(
+                                "[dim]Falling back to template-based generation...[/dim]"
+                            )
                         else:
                             logger.error(f"AI generation error: {ai_error}")
                             progress.stop()
@@ -767,11 +855,16 @@ def handle_generate_mode(ai=False, path="."):
                     save_readme(readme, str(output_path))
                 except Exception as save_error:
                     from projectreadmegen.exceptions import ProjectReadmeGenException
+
                     progress.stop()
                     if isinstance(save_error, ProjectReadmeGenException):
-                        console.print(f"[red]✗ Save Error: {save_error.user_message}[/red]")
+                        console.print(
+                            f"[red]✗ Save Error: {save_error.user_message}[/red]"
+                        )
                     else:
-                        console.print(f"[red]✗ Failed to save README: {save_error}[/red]")
+                        console.print(
+                            f"[red]✗ Failed to save README: {save_error}[/red]"
+                        )
                     input("\nPress Enter to continue...")
                     return
 
@@ -808,7 +901,6 @@ def handle_generate_mode(ai=False, path="."):
     input("\nPress Enter to continue...")
 
 
-
 def handle_interactive_mode(ai=False, path="."):
     try:
         root = Path(path).resolve()
@@ -830,6 +922,7 @@ def handle_interactive_mode(ai=False, path="."):
             config = load_config(str(root))
         except Exception as e:
             from projectreadmegen.exceptions import ProjectReadmeGenException
+
             if isinstance(e, ProjectReadmeGenException):
                 console.print("[red][-] Configuration Error:[/red]")
                 console.print(f"[dim]  {e.user_message}[/dim]")
@@ -844,24 +937,33 @@ def handle_interactive_mode(ai=False, path="."):
                 if not can_continue:
                     return
 
-            console.print("\n[bold white][*] Synthesizing AI documentation architecture...[/bold white]")
+            console.print(
+                "\n[bold white][*] Synthesizing AI documentation architecture...[/bold white]"
+            )
             try:
                 scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
                 detection = detect_stack(scan)
                 readme = grok.generate_ai_readme(scan, detection, config)
             except Exception as ai_error:
                 from projectreadmegen.exceptions import ProjectReadmeGenException
+
                 if isinstance(ai_error, ProjectReadmeGenException):
                     console.print(f"[yellow][!] {ai_error.user_message}[/yellow]")
                 else:
                     logger.error(f"AI generation error: {ai_error}")
-                    console.print(f"[yellow][!] LPU engine unavailable. {str(ai_error)[:100]}[/yellow]")
-                console.print("[dim][+] Fallback triggered: Deterministic template engine active.[/dim]")
+                    console.print(
+                        f"[yellow][!] LPU engine unavailable. {str(ai_error)[:100]}[/yellow]"
+                    )
+                console.print(
+                    "[dim][+] Fallback triggered: Deterministic template engine active.[/dim]"
+                )
                 scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
                 detection = detect_stack(scan)
                 readme = generate_readme(scan, detection, config)
         else:
-            console.print("\n[bold white]Interactive Customization Studio[/bold white]\n")
+            console.print(
+                "\n[bold white]Interactive Customization Studio[/bold white]\n"
+            )
 
             # Collect user input with validation
             author = input("> Author name (optional): ").strip()
@@ -871,7 +973,9 @@ def handle_interactive_mode(ai=False, path="."):
             github_user = input("> GitHub username (optional): ").strip()
             if github_user:
                 if len(github_user) < 1 or len(github_user) > 39:
-                    console.print("[yellow][!] GitHub username should be 1-39 characters. Skipping.[/yellow]")
+                    console.print(
+                        "[yellow][!] GitHub username should be 1-39 characters. Skipping.[/yellow]"
+                    )
                 else:
                     config["github_username"] = github_user
 
@@ -885,11 +989,15 @@ def handle_interactive_mode(ai=False, path="."):
             # Validate template
             valid_templates = ["minimal", "standard", "full", "academic"]
             if template not in valid_templates:
-                console.print(f"[yellow][!] Unknown target '{template}'. Defaulting to 'standard'.[/yellow]")
+                console.print(
+                    f"[yellow][!] Unknown target '{template}'. Defaulting to 'standard'.[/yellow]"
+                )
                 template = "standard"
             config["template"] = template
 
-            include_tree = input("> Include ASCII folder structure? [Y/n]: ").strip().lower()
+            include_tree = (
+                input("> Include ASCII folder structure? [Y/n]: ").strip().lower()
+            )
             config["include_tree"] = include_tree != "n"
 
             # Scan and generate
@@ -899,10 +1007,15 @@ def handle_interactive_mode(ai=False, path="."):
                 readme = generate_readme(scan, detection, config)
             except Exception as gen_error:
                 from projectreadmegen.exceptions import ProjectReadmeGenException
+
                 if isinstance(gen_error, ProjectReadmeGenException):
-                    console.print(f"[red][-] Generation Error: {gen_error.user_message}[/red]")
+                    console.print(
+                        f"[red][-] Generation Error: {gen_error.user_message}[/red]"
+                    )
                 else:
-                    console.print(f"[red][-] Failed to generate documentation: {gen_error}[/red]")
+                    console.print(
+                        f"[red][-] Failed to generate documentation: {gen_error}[/red]"
+                    )
                     logger.error(f"Generation error: {gen_error}", exc_info=True)
                 input("\nPress Enter to continue...")
                 return
@@ -913,8 +1026,11 @@ def handle_interactive_mode(ai=False, path="."):
             save_readme(readme, str(output_path))
         except Exception as save_error:
             from projectreadmegen.exceptions import ProjectReadmeGenException
+
             if isinstance(save_error, ProjectReadmeGenException):
-                console.print(f"[red][-] File IO Error: {save_error.user_message}[/red]")
+                console.print(
+                    f"[red][-] File IO Error: {save_error.user_message}[/red]"
+                )
             else:
                 console.print(f"[red][-] Failed to write file: {save_error}[/red]")
             input("\nPress Enter to continue...")
@@ -964,10 +1080,14 @@ def main_menu_loop():
             elif choice == "8":
                 handle_launch_web()
             elif choice == "9":
-                console.print("\n[dim]Terminating Project README Gen Studio session. Goodbye.[/dim]\n")
+                console.print(
+                    "\n[dim]Terminating Project README Gen Studio session. Goodbye.[/dim]\n"
+                )
                 break
             else:
-                console.print("\n[red][-] Invalid selection. Choose a number between 1 and 9.[/red]")
+                console.print(
+                    "\n[red][-] Invalid selection. Choose a number between 1 and 9.[/red]"
+                )
                 input("\nPress Enter to continue...")
         except KeyboardInterrupt:
             console.print(
@@ -1071,7 +1191,9 @@ def generate(
         if template.lower() in valid_templates:
             config["template"] = template.lower()
         else:
-            console.print(f"[yellow]⚠ Unknown template '{template}'. Using 'standard'.[/yellow]")
+            console.print(
+                f"[yellow]⚠ Unknown template '{template}'. Using 'standard'.[/yellow]"
+            )
             config["template"] = "standard"
 
     if no_badges:
@@ -1154,7 +1276,9 @@ def generate(
                 except ProjectReadmeGenException as ai_e:
                     progress.stop()
                     console.print(f"[yellow]⚠ {ai_e.user_message}[/yellow]")
-                    console.print("[dim]Falling back to template-based generation...[/dim]")
+                    console.print(
+                        "[dim]Falling back to template-based generation...[/dim]"
+                    )
                     readme = generate_readme(scan, detection, config)
                     progress = Progress(
                         SpinnerColumn(),
@@ -1167,7 +1291,9 @@ def generate(
                 except Exception as ai_e:
                     logger.error(f"AI generation error: {ai_e}", exc_info=True)
                     progress.stop()
-                    console.print("[yellow]⚠ AI generation failed, falling back to template[/yellow]")
+                    console.print(
+                        "[yellow]⚠ AI generation failed, falling back to template[/yellow]"
+                    )
                     readme = generate_readme(scan, detection, config)
                     progress = Progress(
                         SpinnerColumn(),
@@ -1260,7 +1386,9 @@ def interactive(
         if not usagetracker.check_api_key():
             console.print("[yellow]API key required for AI features.[/yellow]")
             if not usagetracker.require_api_key():
-                console.print("[red]✗ Groq API key setup cancelled. Cannot proceed with AI generation.[/red]")
+                console.print(
+                    "[red]✗ Groq API key setup cancelled. Cannot proceed with AI generation.[/red]"
+                )
                 raise typer.Exit(code=1)
 
         try:
@@ -1281,7 +1409,9 @@ def interactive(
                 raise typer.Exit(code=1)
         except Exception as ai_e:
             logger.error(f"AI generation error: {ai_e}", exc_info=True)
-            console.print("[yellow]⚠ AI generation unavailable. Falling back to template.[/yellow]")
+            console.print(
+                "[yellow]⚠ AI generation unavailable. Falling back to template.[/yellow]"
+            )
             try:
                 scan = scan_directory(str(root), max_depth=config["max_tree_depth"])
                 detection = detect_stack(scan)
@@ -1293,7 +1423,9 @@ def interactive(
     else:
         try:
             config["author"] = typer.prompt("Your name (optional)", default="")
-            config["github_username"] = typer.prompt("Your GitHub username (optional)", default="")
+            config["github_username"] = typer.prompt(
+                "Your GitHub username (optional)", default=""
+            )
 
             template = typer.prompt(
                 "Template [minimal/standard/full/academic]", default="standard"
@@ -1302,7 +1434,9 @@ def interactive(
             # Validate template
             valid_templates = ["minimal", "standard", "full", "academic"]
             if template not in valid_templates:
-                console.print(f"[yellow]⚠ Unknown template '{template}'. Using 'standard'.[/yellow]")
+                console.print(
+                    f"[yellow]⚠ Unknown template '{template}'. Using 'standard'.[/yellow]"
+                )
                 template = "standard"
             config["template"] = template
 
@@ -1348,7 +1482,9 @@ def interactive(
 
 @app.command()
 def web(
-    port: int = typer.Option(8000, "--port", "-p", help="Port to run the Web Studio on"),
+    port: int = typer.Option(
+        8000, "--port", "-p", help="Port to run the Web Studio on"
+    ),
     host: str = typer.Option("127.0.0.1", "--host", help="Host interface to bind to"),
 ):
     """Launch the Project README Gen Web UI Studio."""
@@ -1358,13 +1494,27 @@ def web(
 @app.command()
 def profile(
     username: str = typer.Option(..., "--username", "-u", help="GitHub username"),
-    style: str = typer.Option("professional", "--style", "-s", help="Style preset: professional/stylish/unique/basic"),
-    output: str = typer.Option(".", "--output", "-o", help="Output directory or file path"),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Optional GitHub API token (defaults to stored config)"),
+    style: str = typer.Option(
+        "professional",
+        "--style",
+        "-s",
+        help="Style preset: professional/stylish/unique/basic",
+    ),
+    output: str = typer.Option(
+        ".", "--output", "-o", help="Output directory or file path"
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        "-t",
+        help="Optional GitHub API token (defaults to stored config)",
+    ),
 ):
     """Generate a GitHub Profile README directly from the terminal."""
     if not usagetracker.check_api_key():
-        console.print("[red][-] Groq API Key required. Execute `python -m projectreadmegen config --key gsk_...` first.[/red]")
+        console.print(
+            "[red][-] Groq API Key required. Execute `python -m projectreadmegen config --key gsk_...` first.[/red]"
+        )
         raise typer.Exit(code=1)
 
     is_valid, error = github_profile.validate_github_username(username)
@@ -1373,15 +1523,23 @@ def profile(
         raise typer.Exit(code=1)
 
     profile_url = f"https://github.com/{username}"
-    github_token = token or (usagetracker.get_github_token() if usagetracker.has_github_token() else None)
+    github_token = token or (
+        usagetracker.get_github_token() if usagetracker.has_github_token() else None
+    )
 
-    console.print(f"\n[bold white][*] Querying GitHub REST endpoints for @{username}...[/bold white]")
+    console.print(
+        f"\n[bold white][*] Querying GitHub REST endpoints for @{username}...[/bold white]"
+    )
     user_data = github_profile.fetch_github_user(username, github_token)
     repos = github_profile.fetch_user_repos(username, github_token) if user_data else []
     languages = github_profile.calculate_language_stats(repos) if repos else {}
 
-    console.print(f"[bold white][+] Indexed {len(repos)} repositories and aggregated language distribution[/bold white]")
-    console.print(f"[bold white][*] Synthesizing {style} profile architecture via Groq LPU engine...[/bold white]\n")
+    console.print(
+        f"[bold white][+] Indexed {len(repos)} repositories and aggregated language distribution[/bold white]"
+    )
+    console.print(
+        f"[bold white][*] Synthesizing {style} profile architecture via Groq LPU engine...[/bold white]\n"
+    )
 
     try:
         readme_content = github_profile.generate_readme_content(
@@ -1395,7 +1553,9 @@ def profile(
 
         success, folder_path = github_profile.create_output_folder(username, output)
         if not success:
-            console.print(f"[red][-] Error creating destination path: {folder_path}[/red]")
+            console.print(
+                f"[red][-] Error creating destination path: {folder_path}[/red]"
+            )
             raise typer.Exit(code=1)
 
         success, result = github_profile.save_github_readme(
@@ -1421,10 +1581,18 @@ def profile(
 
 @app.command()
 def config(
-    key: Optional[str] = typer.Option(None, "--key", "-k", help="Set Groq API Key (starts with gsk_)"),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Set GitHub API Token (starts with ghp_)"),
-    remove_key: bool = typer.Option(False, "--remove-key", help="Remove stored Groq API Key"),
-    remove_token: bool = typer.Option(False, "--remove-token", help="Remove stored GitHub Token"),
+    key: Optional[str] = typer.Option(
+        None, "--key", "-k", help="Set Groq API Key (starts with gsk_)"
+    ),
+    token: Optional[str] = typer.Option(
+        None, "--token", "-t", help="Set GitHub API Token (starts with ghp_)"
+    ),
+    remove_key: bool = typer.Option(
+        False, "--remove-key", help="Remove stored Groq API Key"
+    ),
+    remove_token: bool = typer.Option(
+        False, "--remove-token", help="Remove stored GitHub Token"
+    ),
     show: bool = typer.Option(False, "--show", help="Show currently configured keys"),
 ):
     """Set or inspect API keys and tokens for both CLI and Web Studio usage."""
@@ -1437,13 +1605,19 @@ def config(
     if key:
         if key.startswith("gsk_") and len(key) > 10:
             usagetracker.save_api_key(key)
-            console.print("[bold white][+] Groq API Key persisted atomically across CLI and Web Studio.[/bold white]")
+            console.print(
+                "[bold white][+] Groq API Key persisted atomically across CLI and Web Studio.[/bold white]"
+            )
         else:
-            console.print("[red][-] Invalid key format. Key must start with 'gsk_' and exceed 10 characters.[/red]")
+            console.print(
+                "[red][-] Invalid key format. Key must start with 'gsk_' and exceed 10 characters.[/red]"
+            )
             raise typer.Exit(code=1)
     if token:
         usagetracker.save_github_token(token)
-        console.print("[bold white][+] GitHub API Token persisted atomically across CLI and Web Studio.[/bold white]")
+        console.print(
+            "[bold white][+] GitHub API Token persisted atomically across CLI and Web Studio.[/bold white]"
+        )
 
     if show or (not key and not token and not remove_key and not remove_token):
         unified = usagetracker.get_unified_status_dict()

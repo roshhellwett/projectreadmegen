@@ -6,16 +6,16 @@
 def lang_badge(language: str) -> str:
     """Return a shields.io language badge."""
     colors = {
-        "Python":     "3776AB",
+        "Python": "3776AB",
         "JavaScript": "F7DF1E",
         "TypeScript": "3178C6",
-        "C++":        "00599C",
-        "C":          "A8B9CC",
-        "Rust":       "000000",
-        "Go":         "00ADD8",
-        "Java":       "007396",
-        "HTML/CSS":   "E34F26",
-        "Shell":      "4EAA25",
+        "C++": "00599C",
+        "C": "A8B9CC",
+        "Rust": "000000",
+        "Go": "00ADD8",
+        "Java": "007396",
+        "HTML/CSS": "E34F26",
+        "Shell": "4EAA25",
         "PowerShell": "5391FE",
     }
     color = colors.get(language, "555555")
@@ -42,15 +42,15 @@ def build_badge_line(detection: dict) -> str:
         str: One line of Markdown with all relevant badges space-separated.
     """
     badges = []
-    
+
     lang = detection.get("primary_lang", "")
     if lang and lang != "Unknown":
         badges.append(lang_badge(lang))
-    
+
     lic = detection.get("license", "None")
     if lic and lic != "None":
         b = license_badge(lic)
         if b:
             badges.append(b)
-    
+
     return "  ".join(badges)
