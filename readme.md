@@ -8,7 +8,7 @@
 
 **Auto-generate state-of-the-art documentation, AI-powered project architectures, interactive graph models, and GitHub profile masterpieces — in seconds.**
 
-![Web UI Studio](https://github.com/roshhellwett/projectreadmegen/blob/main/Sample/sampleone.png?raw=true)
+![Web UI Studio](https://github.com/roshhellwett/projectreadmegen/blob/51d307a28bbb7d9c960c3c06b1d30b8db682382a/sample/sampleone.png)
 
 ---
 
@@ -104,18 +104,14 @@ projectreadmegen start
 
 Here is a look at what Project README Gen builds across our Web Studio and generated output samples:
 
-### Project Scanner & Detection Studio
-![Project Scanner](https://github.com/roshhellwett/projectreadmegen/blob/main/Sample/sampleone.png?raw=true)
 
-### README Template & Live Preview Studio
-![README Studio](https://github.com/roshhellwett/projectreadmegen/blob/main/Sample/sampletwo.png?raw=true)
-
-### AI Architect & Interactive Graph Studio
-![AI Architect Studio](https://github.com/roshhellwett/projectreadmegen/blob/main/Sample/samplethree.png?raw=true)
-
-### GitHub Profile Studio
-![GitHub Profile Studio](https://github.com/roshhellwett/projectreadmegen/blob/main/Sample/samplefour.png?raw=true)
-
+![Project Scanner](https://github.com/roshhellwett/projectreadmegen/blob/51d307a28bbb7d9c960c3c06b1d30b8db682382a/sample/sampleone.png)
+---
+![README Studio](https://github.com/roshhellwett/projectreadmegen/blob/51d307a28bbb7d9c960c3c06b1d30b8db682382a/sample/sampletwo.png)
+---
+![AI Architect Studio](https://github.com/roshhellwett/projectreadmegen/blob/51d307a28bbb7d9c960c3c06b1d30b8db682382a/sample/samplethree.png)
+---
+![GitHub Profile Studio](https://github.com/roshhellwett/projectreadmegen/blob/51d307a28bbb7d9c960c3c06b1d30b8db682382a/sample/samplefour.png)
 ---
 
 ## All Commands & Their Usage
