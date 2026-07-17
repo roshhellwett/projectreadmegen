@@ -3,6 +3,7 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 import { showToast } from '../main.js';
 import { setMindMapGraphFromScan } from './mindmapStudio.js';
+import { syncPathInputs, setState } from '../state.js';
 
 let currentScanResult = null;
 let currentDetection = null;
@@ -13,7 +14,7 @@ export function initScannerStudio() {
   const inputPath = document.getElementById('scanner-path');
   const checkboxCache = document.getElementById('scanner-cache');
   const templatePills = document.querySelectorAll('#template-selector .pill-btn');
-  const viewToggleBtns = document.querySelectorAll('#tab-scanner .view-mode-toggle .toggle-btn');
+  const viewToggleBtns = document.querySelectorAll('#page-studio .view-mode-toggle .toggle-btn');
   const textareaCode = document.getElementById('readme-textarea');
   const btnCopyTree = document.getElementById('btn-copy-tree');
   const btnCopyReadme = document.getElementById('btn-copy-readme');
@@ -44,14 +45,12 @@ export function initScannerStudio() {
       currentDetection = data.detection;
       currentConfig = { ...data.config, template: currentConfig.template };
 
+      // Update shared state
+      setState('scanResult', currentScanResult);
+      setState('detection', currentDetection);
+
       if (data.resolved_path) {
-        if (inputPath) { inputPath.value = data.resolved_path; inputPath.title = data.resolved_path; }
-        const aiPath = document.getElementById('ai-path');
-        if (aiPath) { aiPath.value = data.resolved_path; aiPath.title = data.resolved_path; }
-        const gPath = document.getElementById('git-path');
-        if (gPath) { gPath.value = data.resolved_path; gPath.title = data.resolved_path; }
-        const mPath = document.getElementById('mindmap-path');
-        if (mPath) { mPath.value = data.resolved_path; mPath.title = data.resolved_path; }
+        syncPathInputs(data.resolved_path);
       }
       if (data.scan_result && data.scan_result.graph) {
         setMindMapGraphFromScan(data.scan_result.graph, data.resolved_path);
@@ -74,24 +73,9 @@ export function initScannerStudio() {
     }
   });
 
-  // Bidirectional real-time input sync across tabs
-  const aiPathInput = document.getElementById('ai-path');
-  const gPathInput = document.getElementById('git-path');
-  const mPathInput = document.getElementById('mindmap-path');
+  // Path input sync via shared state
   inputPath?.addEventListener('input', () => {
-    if (aiPathInput) aiPathInput.value = inputPath.value;
-    if (gPathInput) gPathInput.value = inputPath.value;
-    if (mPathInput) mPathInput.value = inputPath.value;
-  });
-  aiPathInput?.addEventListener('input', () => {
-    if (inputPath) inputPath.value = aiPathInput.value;
-    if (gPathInput) gPathInput.value = aiPathInput.value;
-    if (mPathInput) mPathInput.value = aiPathInput.value;
-  });
-  gPathInput?.addEventListener('input', () => {
-    if (inputPath) inputPath.value = gPathInput.value;
-    if (aiPathInput) aiPathInput.value = gPathInput.value;
-    if (mPathInput) mPathInput.value = gPathInput.value;
+    syncPathInputs(inputPath.value);
   });
 
   // Template selector pills
@@ -167,9 +151,6 @@ export function initScannerStudio() {
     URL.revokeObjectURL(url);
     showToast('README.md downloaded successfully!', 'success');
   });
-
-  // Trigger initial scan on load for default "."
-  btnScan?.click();
 }
 
 function updateStatsOverview(scan, detection) {

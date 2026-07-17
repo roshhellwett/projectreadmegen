@@ -1,4 +1,5 @@
 import { showToast } from '../main.js';
+import { syncPathInputs } from '../state.js';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import { computeTreePositions } from '../mindmap/treeLayout.js';
@@ -81,12 +82,7 @@ export function initMindMapStudio() {
   });
 
   inputPath?.addEventListener('input', () => {
-    const sPath = document.getElementById('scanner-path');
-    const aPath = document.getElementById('ai-path');
-    const gPath = document.getElementById('git-path');
-    if (sPath) sPath.value = inputPath.value;
-    if (aPath) aPath.value = inputPath.value;
-    if (gPath) gPath.value = inputPath.value;
+    syncPathInputs(inputPath.value);
   });
 
   layoutBtns.forEach(btn => {

@@ -1,4 +1,5 @@
 import { showToast } from '../main.js';
+import { syncPathInputs } from '../state.js';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import { computeGitPositions } from '../gittrack/treeLayout.js';
@@ -53,12 +54,7 @@ export function initGitTrack() {
   btnRefresh?.addEventListener('click', () => loadGitGraph(inputPath?.value || '.'));
 
   inputPath?.addEventListener('input', () => {
-    const sPath = document.getElementById('scanner-path');
-    const aPath = document.getElementById('ai-path');
-    const mPath = document.getElementById('mindmap-path');
-    if (sPath) sPath.value = inputPath.value;
-    if (aPath) aPath.value = inputPath.value;
-    if (mPath) mPath.value = inputPath.value;
+    syncPathInputs(inputPath.value);
   });
 
   inputPath?.addEventListener('keydown', (e) => {

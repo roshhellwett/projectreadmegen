@@ -1,4 +1,4 @@
-import { showToast } from '../main.js';
+import { showToast, showErrorDialog } from '../main.js';
 
 let allSkills = [];
 let lastPath = '';
@@ -46,6 +46,24 @@ function getCategoryIcon(cat) {
 export function initSkillsStudio() {
   const container = document.getElementById('skills-categories-container');
   loadSkillsData(container);
+}
+
+function getInstalledState() {
+  try {
+    return JSON.parse(localStorage.getItem('skills_installed') || '{}');
+  } catch { return {}; }
+}
+
+function saveInstalledState(skillId, tools) {
+  const state = getInstalledState();
+  state[skillId] = { tools: tools || [], timestamp: Date.now() };
+  localStorage.setItem('skills_installed', JSON.stringify(state));
+}
+
+function removeInstalledState(skillId) {
+  const state = getInstalledState();
+  delete state[skillId];
+  localStorage.setItem('skills_installed', JSON.stringify(state));
 }
 
 async function setDefaultPath(pathInput) {
@@ -174,6 +192,14 @@ function setupEventListeners(container, searchInput, pathInput, installBtn) {
       showToolPicker([installBtn.dataset.id], container);
       return;
     }
+
+    const uninstallBtn = e.target.closest('.skill-uninstall-btn');
+    if (uninstallBtn) {
+      e.stopPropagation();
+      const skillId = uninstallBtn.dataset.id;
+      uninstallSkill(skillId, container);
+      return;
+    }
   });
 }
 
@@ -197,6 +223,8 @@ async function loadSkillsData(container) {
     currentCategory = null;
     renderBanners(allSkills, container, '');
     updateCount(allSkills.length);
+    // Restore persistent installed state
+    setTimeout(() => loadInstalledState(container), 100);
   } catch (err) {
     container.innerHTML = `<div class="empty-state"><h4>Failed to Load Skills</h4><p>${err.message}</p></div>`;
   }
@@ -500,6 +528,7 @@ async function installSelectedSkills(skillIds, container, tools) {
 
     if (fresh.length || existing.length) {
       const reg = data.registration;
+      const regTools = reg?.detected_tools || [];
       let regMsg = msg.trim();
       if (reg) {
         const tools = reg.detected_tools;
@@ -520,9 +549,17 @@ async function installSelectedSkills(skillIds, container, tools) {
         }
         if (reg.errors && reg.errors.length) {
           regMsg += `\nRegistration errors: ${reg.errors.length}`;
+          for (const err of reg.errors.slice(0, 3)) {
+            const ec = err.error_code || 'N/A';
+            regMsg += `\n  [${ec}] ${err.tool}/${err.skill_id}: ${err.error.slice(0, 80)}`;
+          }
         }
       }
       showToast(regMsg || 'Done!', 'success');
+      // Persist installed state
+      for (const sid of skillIds) {
+        saveInstalledState(sid, regTools);
+      }
       container.querySelectorAll('.skill-checkbox:checked').forEach((cb) => (cb.checked = false));
       updateSelectedCount();
       markInstalled(
@@ -533,12 +570,64 @@ async function installSelectedSkills(skillIds, container, tools) {
       showToast(errors.map((e) => e.id).join(', ') + ' failed', 'error');
     }
   } catch (err) {
-    showToast(`Install failed: ${err.message}`, 'error');
+    showErrorDialog('SKL-FR00', 'Install failed: ' + err.message, err.stack || '');
   } finally {
     if (installBtn) {
       installBtn.disabled = false;
       installBtn.innerHTML = 'Install Selected';
     }
+  }
+}
+
+async function uninstallSkill(skillId, container) {
+  const pathInput = document.getElementById('skills-path');
+  const projectPath = (pathInput?.value || '.').trim();
+  if (!projectPath) {
+    showToast('Please enter a project path', 'error');
+    return;
+  }
+
+  if (!confirm(`Remove "${skillId.replace(/-/g, ' ')}" from project and all AI tools?`)) return;
+
+  try {
+    const res = await fetch('/api/skills/uninstall', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_path: projectPath, skills: [skillId] }),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({ detail: 'Uninstall failed' }));
+      throw new Error(e.detail);
+    }
+    const data = await res.json();
+    const removed = (data.uninstalled || []).length;
+    const errs = (data.errors || []).length;
+
+    let msg = `Removed from ${removed} location(s).`;
+    if (errs) {
+      msg += ` ${errs} error(s).`;
+      for (const err of data.errors.slice(0, 3)) {
+        const ec = err.error_code || 'N/A';
+        showErrorDialog(ec, err.error, '');
+      }
+    }
+    showToast(msg, errs ? 'info' : 'success');
+
+    removeInstalledState(skillId);
+    const item = container.querySelector(`.skill-item[data-id="${skillId}"]`);
+    if (item) {
+      item.classList.remove('is-installed');
+      const btn = item.querySelector('.skill-install-btn');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Install';
+        btn.className = 'btn btn-primary btn-sm skill-install-btn';
+      }
+      const uBtn = item.querySelector('.skill-uninstall-btn');
+      if (uBtn) uBtn.remove();
+    }
+  } catch (err) {
+    showErrorDialog('SKL-FR01', 'Uninstall failed: ' + err.message, err.stack || '');
   }
 }
 
@@ -553,6 +642,23 @@ function markInstalled(container, ids) {
         btn.textContent = 'Installed';
         btn.className = 'btn btn-sm btn-installed';
       }
+      // Add uninstall button if not already present
+      if (!item.querySelector('.skill-uninstall-btn')) {
+        const uBtn = document.createElement('button');
+        uBtn.className = 'btn btn-sm btn-outline skill-uninstall-btn';
+        uBtn.textContent = 'Remove';
+        uBtn.dataset.id = item.dataset.id;
+        btn?.parentNode?.appendChild(uBtn);
+      }
     }
   });
+}
+
+// Load persistent installed state from localStorage after skills are rendered
+function loadInstalledState(container) {
+  const state = getInstalledState();
+  const ids = Object.keys(state);
+  if (ids.length) {
+    markInstalled(container, ids);
+  }
 }

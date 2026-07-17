@@ -32,6 +32,8 @@ from projectreadmegen.skills_manager import (
     install_skills,
     register_installed_skills,
     detect_global_tools,
+    uninstall_skills,
+    _error_code,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,23 @@ app = FastAPI(
     description="State-of-the-art Web Studio and API bridge for projectreadmegen.",
     version=__version__,
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Wrap all unhandled exceptions with an error code."""
+    if isinstance(exc, HTTPException):
+        raise exc
+    error_code = _error_code("SVR")
+    logger.error("Unhandled error [%s]: %s", error_code, exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "error_code": error_code,
+            "detail": f"Internal server error. Code: {error_code}",
+        },
+    )
 
 # Enable CORS — restricted to local dev origins only (security: no wildcard)
 _ALLOWED_ORIGINS = [
@@ -689,6 +708,12 @@ class SkillsInstallRequest(BaseModel):
     tools: Optional[List[str]] = Field(default=None, description="Override auto-detected AI tools (opencode, claude-code, cursor, codex-cli, gemini-cli)")
 
 
+class SkillsUninstallRequest(BaseModel):
+    project_path: str = Field(default=".", description="Target project directory")
+    skills: List[str] = Field(..., description="List of skill IDs to uninstall")
+    tools: Optional[List[str]] = Field(default=None, description="Limit removal to specific tools")
+
+
 @app.get("/api/skills/list")
 async def api_skills_list(q: str = ""):
     """List all available skills, optionally filtered by search query."""
@@ -744,6 +769,19 @@ async def api_skills_install(req: SkillsInstallRequest):
     except Exception as e:
         result["registration"] = {"error": str(e), "registrations": [], "errors": [{"tool": "*", "skill_id": "*", "error": str(e)}]}
 
+    return {"status": "success", **result}
+
+
+@app.post("/api/skills/uninstall")
+async def api_skills_uninstall(req: SkillsUninstallRequest):
+    """Uninstall skills from project directory and remove from all AI tool locations."""
+    project_path = req.project_path.strip() or "."
+    resolved = Path(project_path).resolve()
+
+    if not resolved.exists() or not resolved.is_dir():
+        raise HTTPException(status_code=404, detail=f"Project directory not found: {resolved}")
+
+    result = uninstall_skills(str(resolved), req.skills, req.tools)
     return {"status": "success", **result}
 
 

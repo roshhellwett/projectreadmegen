@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import random
 import shutil
 import logging
 from pathlib import Path
@@ -106,6 +107,38 @@ _TOOL_GLOBAL_SKILL_DIRS = {
     "cline": "skills",
     "vscode": "skills",
 }
+
+_TOOL_BINARIES: Dict[str, List[str]] = {
+    "opencode": ["opencode"],
+    "claude-code": ["claude"],
+    "cursor": ["cursor"],
+    "codex-cli": ["codex"],
+    "gemini-cli": ["gemini"],
+    "windsurf": ["windsurf"],
+    "cline": ["cline"],
+    "vscode": ["code"],
+}
+
+_ERR_CODE_POOL = "0123456789ABCDEF"
+
+
+def _error_code(prefix: str = "SKL") -> str:
+    """Generate a unique error code like SKL-A3F2."""
+    suffix = "".join(random.choices(_ERR_CODE_POOL, k=4))
+    return f"{prefix}-{suffix}"
+
+
+def _find_binary(name: str) -> bool:
+    """Check if a binary is on the system PATH."""
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["where" if os.name == "nt" else "which", name],
+            capture_output=True, text=True, timeout=3,
+        )
+        return result.returncode == 0 and result.stdout.strip() != ""
+    except Exception:
+        return False
 
 
 def _normalize_tool_names(raw_names: List[str]) -> List[str]:
@@ -512,8 +545,8 @@ def _detect_installed_tools(project_dir: Path) -> Set[str]:
 def detect_global_tools() -> List[Dict]:
     """Return ALL known AI tool IDs with detection status.
 
-    Returns one entry per known tool. Each entry has `detected: True/False`
-    so the frontend can show all tools to the user and pre-check detected ones.
+    A tool is considered "detected" if its global config dir exists
+    OR its binary is found on the system PATH.
     """
     results: List[Dict] = []
     for tool in _ALL_TOOL_IDS:
@@ -528,6 +561,12 @@ def detect_global_tools() -> List[Dict]:
                     break
             except (PermissionError, OSError):
                 continue
+        if not found:
+            binaries = _TOOL_BINARIES.get(tool, [])
+            for b in binaries:
+                if _find_binary(b):
+                    found = True
+                    break
         results.append({
             "id": tool,
             "name": _TOOL_LABELS.get(tool, tool),
@@ -1057,3 +1096,101 @@ def register_installed_skills(
             result["errors"].append({"tool": "gemini-cli", "skill_id": "*", "error": f"GEMINI.md: {e}"})
 
     return result
+
+
+def uninstall_skills(project_path: str, skill_ids: List[str], tools: Optional[List[str]] = None) -> Dict:
+    """Remove installed skills from project and all tool-specific locations.
+
+    Args:
+        project_path: The target project directory.
+        skill_ids: List of skill IDs to uninstall.
+        tools: Optional list of tool IDs. If empty/None, removes from all known tools.
+
+    Returns:
+        dict with keys:
+          - uninstalled: list of {"id", "tool", "status", "path", "scope"}
+          - errors: list of {"id", "tool", "error", "error_code"}
+    """
+    project_dir = Path(project_path).resolve()
+    results: List[Dict] = []
+    errors: List[Dict] = []
+
+    tool_targets = tools if tools else _ALL_TOOL_IDS
+
+    for skill_id in skill_ids:
+        src_dir = project_dir / "skill" / skill_id
+        if src_dir.exists():
+            try:
+                shutil.rmtree(str(src_dir))
+                results.append({"id": skill_id, "tool": "project", "status": "removed", "path": str(src_dir), "scope": "project"})
+            except Exception as e:
+                errors.append({"id": skill_id, "tool": "project", "error": str(e), "error_code": _error_code("SKL")})
+
+        for tool in tool_targets:
+            try:
+                config_paths = _GLOBAL_TOOL_PATHS.get(tool)
+                removed = False
+                if config_paths:
+                    base = config_paths[0]
+                    sub = _TOOL_GLOBAL_SKILL_DIRS.get(tool, "skills")
+                    if tool == "cursor":
+                        target = base / sub / f"{skill_id}.md"
+                    else:
+                        target = base / sub / skill_id
+                    if target.exists():
+                        if target.is_dir():
+                            shutil.rmtree(str(target))
+                        else:
+                            target.unlink()
+                        results.append({"id": skill_id, "tool": tool, "status": "removed", "path": str(target), "scope": "global"})
+                        removed = True
+
+                if removed:
+                    continue
+
+                if tool == "cursor":
+                    target = project_dir / ".cursor" / "rules" / f"{skill_id}.md"
+                elif tool == "claude-code":
+                    target = project_dir / ".claude" / "skills" / skill_id
+                elif tool == "vscode":
+                    target = project_dir / ".vscode" / "skills" / skill_id
+                    _safe_update_json_config(project_dir / ".vscode" / "settings.json", ["skills.installed"], skill_id)
+                elif tool == "gemini-cli":
+                    target = project_dir / ".gemini" / "skills" / skill_id
+                elif tool == "windsurf":
+                    target = project_dir / ".windsurf" / "skills" / skill_id
+                elif tool == "cline":
+                    target = project_dir / ".cline" / "skills" / skill_id
+                else:
+                    continue
+
+                if target.exists():
+                    if target.is_dir():
+                        shutil.rmtree(str(target))
+                    else:
+                        target.unlink()
+                    results.append({"id": skill_id, "tool": tool, "status": "removed", "path": str(target), "scope": "project"})
+
+            except Exception as e:
+                errors.append({"id": skill_id, "tool": tool, "error": str(e), "error_code": _error_code("SKL")})
+
+    for fname in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
+        fpath = project_dir / fname
+        if fpath.exists():
+            try:
+                content = fpath.read_text("utf-8", errors="replace")
+                updated = content
+                for sid in skill_ids:
+                    skill_name = sid.replace("-", " ").title()
+                    updated = re.sub(
+                        rf"\n### {re.escape(skill_name)}\n.*?(?=\n### |\Z)",
+                        "",
+                        updated,
+                        flags=re.DOTALL,
+                    )
+                if updated != content:
+                    fpath.write_text(updated, encoding="utf-8")
+            except Exception as e:
+                errors.append({"id": "*", "tool": "markdown", "error": str(e), "error_code": _error_code("SKL")})
+
+    return {"uninstalled": results, "errors": errors}

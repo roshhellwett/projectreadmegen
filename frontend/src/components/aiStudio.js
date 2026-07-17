@@ -1,6 +1,7 @@
 // src/components/aiStudio.js — AI README Architect Component
 import { renderMarkdownPreview } from './scannerStudio.js';
 import { showToast } from '../main.js';
+import { syncPathInputs } from '../state.js';
 
 export function initAIStudio() {
   const btnGenerateAI = document.getElementById('btn-generate-ai');
@@ -10,10 +11,15 @@ export function initAIStudio() {
   const textareaInstructions = document.getElementById('ai-instructions');
   const thinkingCard = document.getElementById('ai-thinking-state');
   const modelBadge = document.getElementById('ai-model-badge');
-  const viewToggleBtns = document.querySelectorAll('#tab-ai .view-mode-toggle .toggle-btn');
+  const viewToggleBtns = document.querySelectorAll('#page-ai .view-mode-toggle .toggle-btn');
   const textareaAICode = document.getElementById('ai-textarea');
   const btnCopyAI = document.getElementById('btn-copy-ai');
   const btnDownloadAI = document.getElementById('btn-download-ai');
+
+  // Path sync via shared state
+  inputPath?.addEventListener('input', () => {
+    syncPathInputs(inputPath.value);
+  });
 
   textareaInstructions?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

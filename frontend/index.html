@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project README Gen — Minimalist Documentation Studio</title>
+    <title>Project README Gen — Premium Documentation Studio</title>
+    <meta name="description" content="Generate stunning README documentation, AI-powered profiles, interactive mind maps, and git visualizations for your projects." />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,39 +17,46 @@
   <body>
     <div class="app-shell">
       <!-- SIDEBAR NAVIGATION -->
-      <aside class="app-sidebar">
+      <aside class="app-sidebar" id="app-sidebar">
         <div class="sidebar-header">
           <img src="/favicon.png" alt="Logo" class="sidebar-logo-icon" />
           <div class="sidebar-brand">
             <span class="brand-title">README Gen</span>
-            <span class="brand-subtitle">Studio v7.0.0</span>
+            <span class="brand-subtitle">Studio v8.0</span>
           </div>
         </div>
 
         <nav class="sidebar-nav">
           <div class="nav-section-label">STUDIO</div>
-          <button class="nav-btn active" data-tab="tab-scanner">
+          <button class="nav-btn active" data-route="#/studio">
+            <span class="nav-icon">◈</span>
             <span class="nav-label">Project Studio</span>
           </button>
-          <button class="nav-btn" data-tab="tab-ai">
+          <button class="nav-btn" data-route="#/ai">
+            <span class="nav-icon">◆</span>
             <span class="nav-label">AI Architect</span>
           </button>
-          <button class="nav-btn" data-tab="tab-profile">
+          <button class="nav-btn" data-route="#/profile">
+            <span class="nav-icon">◉</span>
             <span class="nav-label">GitHub Profile</span>
           </button>
-          <button class="nav-btn" data-tab="tab-mindmap">
+          <button class="nav-btn" data-route="#/mindmap">
+            <span class="nav-icon">◎</span>
             <span class="nav-label">Mind Map Studio</span>
           </button>
-          <button class="nav-btn" data-tab="tab-git">
+          <button class="nav-btn" data-route="#/git">
+            <span class="nav-icon">◇</span>
             <span class="nav-label">Git Track Studio</span>
           </button>
-          <button class="nav-btn" data-tab="tab-skills">
+          <button class="nav-btn" data-route="#/skills">
+            <span class="nav-icon">▣</span>
             <span class="nav-label">Skills Studio</span>
           </button>
 
           <div class="nav-section-label" style="margin-top: 16px">SYSTEM</div>
-          <button class="nav-btn" data-tab="tab-dashboard">
-            <span class="nav-label">API Dashboard</span>
+          <button class="nav-btn" data-route="#/settings">
+            <span class="nav-icon">⚙</span>
+            <span class="nav-label">Settings</span>
           </button>
         </nav>
 
@@ -57,7 +65,7 @@
             <span class="status-dot"></span>
             <span class="status-text" id="api-status-text">Checking API...</span>
           </div>
-          <div class="sidebar-meta">Monochrome Architecture</div>
+          <div class="sidebar-meta">Premium Architecture</div>
         </div>
       </aside>
 
@@ -68,7 +76,7 @@
             <button class="hamburger-btn" id="hamburger-toggle" aria-label="Toggle sidebar">
               <span></span><span></span><span></span>
             </button>
-            <h2 id="current-section-title">Project Studio</h2>
+            <h1 id="current-section-title">Project Studio</h1>
           </div>
           <div class="topbar-right">
             <a
@@ -83,574 +91,7 @@
         </header>
 
         <main class="app-main">
-          <!-- TAB 1: PROJECT SCANNER & TEMPLATE STUDIO -->
-          <section id="tab-scanner" class="tab-pane active">
-            <div class="control-banner panel-card">
-              <div class="input-group path-input-group">
-                <label for="scanner-path">Project Root Path</label>
-                <div class="input-with-actions">
-                  <input
-                    type="text"
-                    id="scanner-path"
-                    placeholder="e.g., . or D:\projects\my-app or C:\workspace\project"
-                    value="."
-                  />
-                  <button id="btn-scan" class="btn btn-primary">
-                    <span>Scan Directory</span>
-                  </button>
-                </div>
-              </div>
-              <div class="banner-actions mt-2">
-                <label class="toggle-checkbox">
-                  <input type="checkbox" id="scanner-cache" checked />
-                  <span class="checkmark"></span>
-                  <span class="toggle-label">Smart Scan Cache (Zero-latency atomic cache)</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="stats-overview" id="scanner-stats-bar">
-              <div class="stat-card stat-card-dark">
-                <span class="stat-label">Primary Language</span>
-                <span class="stat-value" id="stat-lang">—</span>
-              </div>
-              <div class="stat-card panel-card">
-                <span class="stat-label">Project Type</span>
-                <span class="stat-value" id="stat-type">—</span>
-              </div>
-              <div class="stat-card panel-card">
-                <span class="stat-label">Detected License</span>
-                <span class="stat-value" id="stat-license">—</span>
-              </div>
-              <div class="stat-card panel-card">
-                <span class="stat-label">Total Files & Dirs</span>
-                <span class="stat-value" id="stat-count">—</span>
-              </div>
-            </div>
-
-            <div class="studio-split-grid">
-              <!-- Left Pane: Tree & Detection Details -->
-              <div class="split-pane panel-card">
-                <div class="pane-header">
-                  <div class="header-left">
-                    <h3>Folder Structure & Detection</h3>
-                    <span class="badge badge-mono" id="tree-depth-badge">Depth: Auto</span>
-                  </div>
-                  <button class="btn btn-secondary btn-sm" id="btn-copy-tree" title="Copy ASCII Tree">Copy</button>
-                </div>
-                <div class="tree-container">
-                  <pre><code class="language-plaintext" id="scanner-tree-code">Click "Scan Directory" above to analyze your repository structure and build our ASCII visualizer.</code></pre>
-                </div>
-                <div class="detection-chips" id="detection-chips-container">
-                  <!-- Dynamically populated chips -->
-                </div>
-              </div>
-
-              <!-- Right Pane: Template Selector & Live Preview -->
-              <div class="split-pane panel-card">
-                <div class="pane-header">
-                  <div class="header-left">
-                    <h3>README Studio</h3>
-                    <div class="template-selector-pills" id="template-selector">
-                      <button class="pill-btn active" data-template="standard">Standard</button>
-                      <button class="pill-btn" data-template="minimal">Minimal</button>
-                      <button class="pill-btn" data-template="full">Full</button>
-                      <button class="pill-btn" data-template="academic">Academic</button>
-                    </div>
-                  </div>
-                  <div class="header-right">
-                    <div class="view-mode-toggle">
-                      <button class="toggle-btn active" data-view="render">Live Preview</button>
-                      <button class="toggle-btn" data-view="code">Markdown Code</button>
-                    </div>
-                    <button class="btn btn-secondary btn-sm" id="btn-copy-readme">Copy</button>
-                    <button class="btn btn-primary btn-sm" id="btn-download-readme">Download</button>
-                  </div>
-                </div>
-
-                <div class="preview-area">
-                  <div id="readme-preview-render" class="markdown-body active">
-                    <div class="empty-state">
-                      <h4>Ready to Generate</h4>
-                      <p>Scan your directory or select a template to generate documentation.</p>
-                    </div>
-                  </div>
-                  <div id="readme-preview-code" class="code-view">
-                    <textarea
-                      id="readme-textarea"
-                      spellcheck="false"
-                      placeholder="# Generated README markdown will appear here..."
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- TAB 2: AI README ARCHITECT (GROQ) -->
-          <section id="tab-ai" class="tab-pane">
-            <div class="ai-banner panel-card">
-              <div class="ai-controls-grid">
-                <div class="input-group">
-                  <label for="ai-path">Project Directory</label>
-                  <input type="text" id="ai-path" value="." placeholder="e.g., . or D:\projects\my-app" />
-                </div>
-                <div class="input-group">
-                  <label for="ai-model">Groq AI Model</label>
-                  <select id="ai-model">
-                    <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Recommended)</option>
-                    <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Fast)</option>
-                    <option value="mixtral-8x7b-32768">mixtral-8x7b-32768 (High Context)</option>
-                  </select>
-                </div>
-                <div class="input-group">
-                  <label for="ai-tone">Architectural Tone</label>
-                  <select id="ai-tone">
-                    <option value="professional">Professional Corporate</option>
-                    <option value="technical">Deeply Technical & Architectural</option>
-                    <option value="enthusiastic">Vibrant & Community Focused</option>
-                    <option value="concise">Ultra-Concise Bullet Points</option>
-                  </select>
-                </div>
-              </div>
-              <div class="input-group mt-3">
-                <label for="ai-instructions">Custom Architectural Instructions (Optional)</label>
-                <textarea
-                  id="ai-instructions"
-                  rows="3"
-                  placeholder="e.g., Emphasize zero-latency rendering, include deployment instructions for Docker, highlight security benchmarks..."
-                ></textarea>
-              </div>
-              <div class="ai-action-bar mt-4 pt-3">
-                <button id="btn-generate-ai" class="btn btn-primary">
-                  <span>Architect AI README</span>
-                </button>
-              </div>
-            </div>
-
-            <div id="ai-thinking-state" class="thinking-card panel-card hidden">
-              <div class="spinner-ring"></div>
-              <div class="thinking-content">
-                <h4 id="thinking-title">AI Architect is synthesizing codebase...</h4>
-                <p id="thinking-subtitle">Analyzing folder tree, checking dependencies, and crafting documentation.</p>
-              </div>
-            </div>
-
-            <div class="panel-card preview-card mt-4">
-              <div class="pane-header">
-                <div class="header-left">
-                  <h3>AI Generated Documentation</h3>
-                  <span class="badge badge-mono" id="ai-model-badge">Model: llama-3.3-70b</span>
-                </div>
-                <div class="header-right">
-                  <div class="view-mode-toggle">
-                    <button class="toggle-btn active" data-view="ai-render">Live Preview</button>
-                    <button class="toggle-btn" data-view="ai-code">Markdown Code</button>
-                  </div>
-                  <button class="btn btn-secondary btn-sm" id="btn-copy-ai">Copy</button>
-                  <button class="btn btn-primary btn-sm" id="btn-download-ai">Download</button>
-                </div>
-              </div>
-              <div class="preview-area">
-                <div id="ai-preview-render" class="markdown-body active">
-                  <div class="empty-state">
-                    <h4>Configure & Architect</h4>
-                    <p>
-                      Select your tone and instructions above to generate a custom, project-aware README via Groq LLM.
-                    </p>
-                  </div>
-                </div>
-                <div id="ai-preview-code" class="code-view">
-                  <textarea
-                    id="ai-textarea"
-                    spellcheck="false"
-                    placeholder="# AI Generated Markdown will appear here..."
-                  ></textarea>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- TAB 3: GITHUB PROFILE STUDIO -->
-          <section id="tab-profile" class="tab-pane">
-            <div class="profile-controls-grid">
-              <div class="panel-card profile-form-card">
-                <h3>Profile Setup & Configuration</h3>
-                <div class="form-grid">
-                  <div class="input-group">
-                    <label for="profile-username">GitHub Username <span class="required">*</span></label>
-                    <input type="text" id="profile-username" placeholder="e.g., roshhellwett" />
-                  </div>
-                  <div class="input-group">
-                    <label for="profile-style">Visual Style Preset</label>
-                    <select id="profile-style">
-                      <option value="professional">Professional & Career Focused</option>
-                      <option value="stylish">Stylish & Dynamic Cards</option>
-                      <option value="unique">Creative & Unique Bento</option>
-                      <option value="basic">Clean Minimalist</option>
-                    </select>
-                  </div>
-                  <div class="input-group">
-                    <label for="profile-tagline">Animated Typing Tagline</label>
-                    <input
-                      type="text"
-                      id="profile-tagline"
-                      placeholder="e.g., Building state-of-the-art applications"
-                    />
-                  </div>
-                  <div class="input-group">
-                    <label for="profile-token">GitHub Token (Optional for higher rate limits)</label>
-                    <input type="password" id="profile-token" placeholder="ghp_xxxxxxxxxxxx" />
-                  </div>
-                </div>
-                <div class="mt-4 pt-3" style="border-top: 1px solid var(--border-color)">
-                  <button id="btn-generate-profile" class="btn btn-primary w-full">
-                    <span>Generate Profile README</span>
-                  </button>
-                </div>
-              </div>
-
-              <div class="panel-card profile-stats-preview">
-                <h3>Live Profile Metrics Preview</h3>
-                <div class="profile-stats-content" id="profile-stats-content">
-                  <div class="empty-state">
-                    <h4>Enter Username</h4>
-                    <p>
-                      We'll fetch public repositories, language distribution, and GitHub stats to populate your custom
-                      profile.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel-card mt-4">
-              <div class="pane-header">
-                <div class="header-left">
-                  <h3>Profile README Studio</h3>
-                  <span class="badge badge-mono" id="profile-style-badge">Style: Professional</span>
-                </div>
-                <div class="header-right">
-                  <div class="view-mode-toggle">
-                    <button class="toggle-btn active" data-view="profile-render">Live Preview</button>
-                    <button class="toggle-btn" data-view="profile-code">Markdown Code</button>
-                  </div>
-                  <button class="btn btn-secondary btn-sm" id="btn-copy-profile">Copy</button>
-                  <button class="btn btn-primary btn-sm" id="btn-download-profile">Download</button>
-                </div>
-              </div>
-              <div class="preview-area">
-                <div id="profile-preview-render" class="markdown-body active">
-                  <div class="empty-state">
-                    <h4>Your Profile Masterpiece</h4>
-                    <p>
-                      Click "Generate Profile README" to create a clean GitHub profile with live shields and dynamic
-                      stats.
-                    </p>
-                  </div>
-                </div>
-                <div id="profile-preview-code" class="code-view">
-                  <textarea
-                    id="profile-textarea"
-                    spellcheck="false"
-                    placeholder="# GitHub Profile Markdown will appear here..."
-                  ></textarea>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- TAB 4: CODEBASE MIND MAP & GRAPH STUDIO -->
-          <section id="tab-mindmap" class="tab-pane">
-            <div class="control-banner panel-card">
-              <div class="input-group path-input-group">
-                <label for="mindmap-path">Workspace Root Path</label>
-                <div class="input-with-actions">
-                  <input type="text" id="mindmap-path" placeholder="e.g. D:\project or ." value="." />
-                  <button id="btn-scan-mindmap" class="btn btn-primary">Analyze Graph</button>
-                </div>
-              </div>
-
-              <div class="options-row">
-                <div class="options-group">
-                  <span class="group-title">Layout Style</span>
-                  <div class="template-selector-pills" id="mindmap-layout-pills">
-                    <button class="pill-btn active" data-layout="tree">Collapsible Tree</button>
-                    <button class="pill-btn" data-layout="radial">Radial Mind Map</button>
-                    <button class="pill-btn" data-layout="horizontal">Horizontal Tree</button>
-                    <button class="pill-btn" data-layout="grid">Grid Cluster</button>
-                  </div>
-                </div>
-
-                <div class="options-group">
-                  <span class="group-title">Connection Filter</span>
-                  <div class="template-selector-pills" id="mindmap-filter-pills">
-                    <button class="pill-btn active" data-filter="all">All Edges (Hierarchy + Imports)</button>
-                    <button class="pill-btn" data-filter="structural">Folder Structure Only</button>
-                    <button class="pill-btn" data-filter="imports">Module Imports Only</button>
-                  </div>
-                </div>
-
-                <div class="options-group">
-                  <span class="group-title">Zoom & Pan</span>
-                  <div class="template-selector-pills">
-                    <button class="pill-btn" id="btn-mm-zoomin" title="Zoom In">+</button>
-                    <button class="pill-btn" id="btn-mm-zoomout" title="Zoom Out">-</button>
-                    <button class="pill-btn" id="btn-mm-reset" title="Reset View">Reset</button>
-                    <button class="pill-btn" id="btn-mm-fit" title="Fit View to Window">Fit</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="mindmap-split-grid mt-4">
-              <div class="mindmap-canvas-card panel-card">
-                <div class="pane-header">
-                  <div class="header-left">
-                    <h3>Interactive Codebase Mind Map</h3>
-                    <div id="mindmap-stats-bar" class="mindmap-stats-bar">
-                      <span class="badge badge-mono">Nodes: 0</span>
-                      <span class="badge badge-mono">Edges: 0</span>
-                    </div>
-                  </div>
-                  <div class="header-right">
-                    <span class="text-xs text-secondary"
-                      >Drag canvas to pan | Scroll to zoom | Click vertices for details</span
-                    >
-                  </div>
-                </div>
-                <div id="mindmap-canvas-container" class="mindmap-canvas-container">
-                  <svg id="mindmap-svg" viewBox="0 0 1200 800" class="mindmap-svg">
-                    <g class="empty-mindmap">
-                      <text x="600" y="400" text-anchor="middle" class="empty-text">
-                        Click "Analyze Graph" above to generate your architectural mind map
-                      </text>
-                    </g>
-                  </svg>
-                </div>
-              </div>
-
-              <div class="mindmap-inspector-card panel-card">
-                <div class="pane-header inspector-pane-header">
-                  <div class="inspector-tab-selector">
-                    <button class="inspector-tab-btn active" id="btn-tab-inspector-details" data-tab="details">
-                      Vertex Inspector
-                    </button>
-                    <button class="inspector-tab-btn" id="btn-tab-inspector-copilot" data-tab="copilot">
-                      Groq AI Copilot
-                    </button>
-                  </div>
-                </div>
-
-                <div id="mindmap-inspector-content" class="mindmap-inspector-content inspector-pane active">
-                  <div class="empty-state" style="padding: 40px 16px">
-                    <h4>Select a Vertex</h4>
-                    <p>
-                      Click on any directory, module, or configuration node on the mind map to inspect its parent folder
-                      and connection edges.
-                    </p>
-                  </div>
-                </div>
-
-                <div id="mindmap-copilot-content" class="mindmap-copilot-content inspector-pane" style="display: none">
-                  <div class="empty-state" style="padding: 40px 16px">
-                    <h4>No Vertex Selected</h4>
-                    <p>
-                      Select any node in the interactive mind map to launch a grounded Groq AI architectural audit and
-                      multi-turn codebase chat.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- TAB 5: GIT TRACK -->
-          <section id="tab-git" class="tab-pane">
-            <div class="control-banner panel-card">
-              <div class="input-group path-input-group">
-                <label for="git-path">Repository Path</label>
-                <div class="input-with-actions">
-                  <input type="text" id="git-path" placeholder="e.g. . or D:\project" value="." />
-                  <button id="btn-git-load" class="btn btn-primary">Load Git Graph</button>
-                  <button id="btn-git-refresh" class="btn btn-secondary btn-sm" title="Refresh">Refresh</button>
-                </div>
-              </div>
-
-              <div class="options-row">
-                <div class="options-group">
-                  <span class="group-title">Layout Style</span>
-                  <div class="template-selector-pills" id="git-layout-pills">
-                    <button class="pill-btn active" data-git-layout="all">All Branches</button>
-                    <button class="pill-btn" data-git-layout="current">Current Branch Only</button>
-                    <button class="pill-btn" data-git-layout="compact">Compact Timeline</button>
-                  </div>
-                </div>
-
-                <div class="options-group">
-                  <span class="group-title">Working Tree Status</span>
-                  <div class="git-status-bar" id="git-status-bar" style="margin-top: 0">
-                    <span class="git-status-chip git-modified">Modified: 0</span>
-                    <span class="git-status-chip git-staged">Staged: 0</span>
-                    <span class="git-status-chip git-untracked">Untracked: 0</span>
-                    <span class="git-branch-label" id="git-current-branch">branch: main</span>
-                  </div>
-                </div>
-
-                <div class="options-group">
-                  <span class="group-title">Zoom & Pan</span>
-                  <div class="template-selector-pills">
-                    <button class="pill-btn" id="btn-git-zoomin" title="Zoom In">+</button>
-                    <button class="pill-btn" id="btn-git-zoomout" title="Zoom Out">-</button>
-                    <button class="pill-btn" id="btn-git-reset" title="Reset View">Reset</button>
-                    <button class="pill-btn" id="btn-git-fit" title="Fit View to Window">Fit</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="mindmap-split-grid mt-4">
-              <div class="mindmap-canvas-card panel-card">
-                <div class="pane-header">
-                  <div class="header-left">
-                    <h3>Interactive Git Commit Graph</h3>
-                    <div id="git-stats-bar" class="mindmap-stats-bar">
-                      <span class="badge badge-mono" id="git-commit-count">Commits: 0</span>
-                    </div>
-                  </div>
-                  <div class="header-right">
-                    <span class="text-xs text-secondary"
-                      >Drag canvas to pan | Scroll to zoom | Click commits for details</span
-                    >
-                  </div>
-                </div>
-                <div id="git-canvas-container" class="mindmap-canvas-container">
-                  <svg id="git-svg" viewBox="0 0 1200 800" class="mindmap-svg">
-                    <g class="empty-mindmap">
-                      <text x="600" y="400" text-anchor="middle" class="empty-text">
-                        Click "Load Git Graph" above to generate your repository graph
-                      </text>
-                    </g>
-                  </svg>
-                </div>
-              </div>
-
-              <div class="mindmap-inspector-card panel-card">
-                <div class="pane-header inspector-pane-header">
-                  <div class="inspector-tab-selector">
-                    <button class="inspector-tab-btn active" style="cursor: default">Commit Inspector</button>
-                  </div>
-                </div>
-
-                <div id="git-inspector-content" class="mindmap-inspector-content inspector-pane active">
-                  <div class="empty-state" style="padding: 40px 16px">
-                    <h4>Select a Commit</h4>
-                    <p>Click on any commit node on the graph to inspect its changes, files, and diff.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- TAB 6: SKILLS STUDIO -->
-          <section id="tab-skills" class="tab-pane">
-            <div class="control-banner panel-card">
-              <div class="input-group path-input-group">
-                <label for="skills-path">Target Project Path</label>
-                <div class="input-with-actions">
-                  <input type="text" id="skills-path" placeholder="e.g., . or D:\projects\my-app" value="." />
-                  <span class="input-hint" id="skills-path-hint"></span>
-                </div>
-              </div>
-              <div class="skills-search-row mt-3">
-                <div class="skills-search-wrap">
-                  <label for="skills-search">Search Skills</label>
-                  <input
-                    type="text"
-                    id="skills-search"
-                    placeholder="ui, ux, architect, testing, security..."
-                    autocomplete="off"
-                  />
-                  <button id="skills-clear-search">&times;</button>
-                </div>
-                <div class="skills-actions">
-                  <span class="badge badge-mono" id="skills-count">0 skills</span>
-                  <span class="badge badge-mono" id="skills-selected-count">0 selected</span>
-                  <button id="skills-install-all" class="btn btn-primary">Install Selected</button>
-                </div>
-              </div>
-            </div>
-
-            <div id="skills-categories-container" class="mt-4">
-              <div class="empty-state">
-                <h4>Loading Skills</h4>
-                <p>Fetching available skill library...</p>
-              </div>
-            </div>
-          </section>
-
-          <!-- TAB 7: API DASHBOARD -->
-          <section id="tab-dashboard" class="tab-pane">
-            <div class="dashboard-grid">
-              <div class="panel-card dashboard-card">
-                <div class="card-title-icon">
-                  <div>
-                    <h3>Groq API Key Configuration</h3>
-                    <p>Required for AI README Generation and Groq integration.</p>
-                  </div>
-                </div>
-                <div class="api-key-box mt-4">
-                  <div class="input-group">
-                    <label for="dashboard-api-key">Your Groq API Key</label>
-                    <div class="password-input-wrapper">
-                      <input type="password" id="dashboard-api-key" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx" />
-                      <button class="btn-toggle-visibility" id="btn-toggle-key">Show</button>
-                    </div>
-                  </div>
-                  <div class="dashboard-actions mt-3">
-                    <button id="btn-save-key" class="btn btn-primary">Save & Verify Key</button>
-                    <a
-                      href="https://console.groq.com/keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="btn btn-secondary"
-                    >
-                      <span>Get Free API Key</span>
-                    </a>
-                  </div>
-                </div>
-                <div class="api-status-banner mt-4" id="dashboard-key-banner">
-                  <!-- Dynamically rendered -->
-                </div>
-              </div>
-
-              <div class="panel-card dashboard-card">
-                <div class="card-title-icon">
-                  <div>
-                    <h3>Usage Quotas & System Status</h3>
-                    <p>Real-time metrics monitored via local state.</p>
-                  </div>
-                </div>
-                <div class="usage-metrics-grid mt-4" id="dashboard-usage-grid">
-                  <div class="metric-box">
-                    <span class="metric-title">Groq Free Tier Rate Limit</span>
-                    <span class="metric-number">30 RPM / 14,400 RPD</span>
-                    <span class="metric-note">Ample quota for rapid documentation iteration</span>
-                  </div>
-                  <div class="metric-box">
-                    <span class="metric-title">Inference Speed</span>
-                    <span class="metric-number">~300+ Tokens/Sec</span>
-                    <span class="metric-note">Powered by Groq LPU™ Engine</span>
-                  </div>
-                  <div class="metric-box">
-                    <span class="metric-title">Local Cache Status</span>
-                    <span class="metric-number">Active & Atomic</span>
-                    <span class="metric-note">Zero redundant disk scans on unchanged folders</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+          <div id="app-page-container" class="page-container"></div>
         </main>
       </div>
     </div>

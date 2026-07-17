@@ -10,7 +10,7 @@ export function initProfileStudio() {
   const inputToken = document.getElementById('profile-token');
   const statsContent = document.getElementById('profile-stats-content');
   const styleBadge = document.getElementById('profile-style-badge');
-  const viewToggleBtns = document.querySelectorAll('#tab-profile .view-mode-toggle .toggle-btn');
+  const viewToggleBtns = document.querySelectorAll('#page-profile .view-mode-toggle .toggle-btn');
   const textareaProfileCode = document.getElementById('profile-textarea');
   const btnCopyProfile = document.getElementById('btn-copy-profile');
   const btnDownloadProfile = document.getElementById('btn-download-profile');
