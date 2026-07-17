@@ -1,0 +1,73 @@
+name: Release & Publish
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    name: Build & Publish Package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write  # Required for PyPI Trusted Publishing
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Build Web Studio SPA
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Bundle Packaged Web Dist
+        run: |
+          mkdir -p src/projectreadmegen/web_dist
+          cp -r frontend/dist/* src/projectreadmegen/web_dist/
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Build Tools
+        run: |
+          python -m pip install --upgrade pip build twine
+
+      - name: Build Source Distribution & Wheel
+        run: python -m build
+
+      - name: Check Package Integrity
+        run: twine check dist/*
+
+      - name: Upload Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: projectreadmegen-distributions
+          path: dist/
+
+      - name: Publish to PyPI (on Release / Tag)
+        if: github.event_name == 'release' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+      - name: Upload Release Assets to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
