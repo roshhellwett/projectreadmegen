@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css" />
-    <script type="module" crossorigin src="/assets/index-Boeu7oZj.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DOPmof4x.css">
+    <script type="module" crossorigin src="/assets/index-AoJvAk0x.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Bqei6SiA.css">
   </head>
   <body>
     <div class="app-shell">
@@ -20,7 +20,7 @@
           <img src="/favicon.png" alt="Logo" class="sidebar-logo-icon" />
           <div class="sidebar-brand">
             <span class="brand-title">README Gen</span>
-            <span class="brand-subtitle">Studio v5.1.13</span>
+            <span class="brand-subtitle">Studio v6.0.0</span>
           </div>
         </div>
 
@@ -40,6 +40,9 @@
           </button>
           <button class="nav-btn" data-tab="tab-git">
             <span class="nav-label">Git Track Studio</span>
+          </button>
+          <button class="nav-btn" data-tab="tab-skills">
+            <span class="nav-label">Skills Studio</span>
           </button>
           
           <div class="nav-section-label" style="margin-top: 16px;">SYSTEM</div>
@@ -492,7 +495,39 @@
             </div>
           </section>
 
-          <!-- TAB 6: API DASHBOARD -->
+          <!-- TAB 6: SKILLS STUDIO -->
+          <section id="tab-skills" class="tab-pane">
+            <div class="control-banner panel-card">
+              <div class="input-group path-input-group">
+                <label for="skills-path">Target Project Path</label>
+                <div class="input-with-actions">
+                  <input type="text" id="skills-path" placeholder="e.g., . or D:\projects\my-app" value="." />
+                  <span class="input-hint" id="skills-path-hint"></span>
+                </div>
+              </div>
+              <div class="skills-search-row mt-3">
+                <div class="skills-search-wrap">
+                  <label for="skills-search">Search Skills</label>
+                  <input type="text" id="skills-search" placeholder="ui, ux, architect, testing, security..." autocomplete="off" />
+                  <button id="skills-clear-search">&times;</button>
+                </div>
+                <div class="skills-actions">
+                  <span class="badge badge-mono" id="skills-count">0 skills</span>
+                  <span class="badge badge-mono" id="skills-selected-count">0 selected</span>
+                  <button id="skills-install-all" class="btn btn-primary">Install Selected</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="skills-categories-container" class="mt-4">
+              <div class="empty-state">
+                <h4>Loading Skills</h4>
+                <p>Fetching available skill library...</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- TAB 7: API DASHBOARD -->
           <section id="tab-dashboard" class="tab-pane">
             <div class="dashboard-grid">
               <div class="panel-card dashboard-card">
@@ -548,35 +583,6 @@
                 </div>
               </div>
 
-              <div class="panel-card dashboard-card" style="grid-column: 1 / -1;">
-                <div class="card-title-icon">
-                  <div>
-                    <h3>Studio Feature Options & Quick Launch</h3>
-                    <p>Launch interactive workspace documentation, visual mapping, and Git tracking studios directly from your dashboard.</p>
-                  </div>
-                </div>
-                <div class="studio-features-grid mt-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                  <div class="connected-pill studio-feature-btn" data-target-tab="tab-scanner" style="padding: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; height: 100%;">
-                    <strong style="font-size: 0.88rem; color: var(--text-primary);">Project Studio</strong>
-                    <span style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.4;">Interactive workspace scanner & template architect.</span>
-                  </div>
-                  <div class="connected-pill studio-feature-btn" data-target-tab="tab-ai" style="padding: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; height: 100%;">
-                    <strong style="font-size: 0.88rem; color: var(--text-primary);">AI Architect</strong>
-                    <span style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.4;">Groq LPU™ powered README generation studio.</span>
-                  </div>
-                  <div class="connected-pill studio-feature-btn" data-target-tab="tab-mindmap" style="padding: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; height: 100%;">
-                    <strong style="font-size: 0.88rem; color: var(--text-primary);">Mind Map Studio</strong>
-                    <span style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.4;">2D visual tree layout of project structure & imports.</span>
-                  </div>
-                  <div class="connected-pill studio-feature-btn" data-target-tab="tab-git" style="padding: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; border-color: #6366f1; background: rgba(99, 102, 241, 0.06); height: 100%;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                      <strong style="font-size: 0.88rem; color: #6366f1;">Git Track Studio</strong>
-                      <span class="badge badge-mono" style="background: #6366f1; color: #fff; font-size: 0.65rem;">STUDIO FEATURE</span>
-                    </div>
-                    <span style="font-size: 0.74rem; color: var(--text-secondary); line-height: 1.4;">Interactive Git commit tree graph, branch lanes & diff inspector.</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </section>
         </main>

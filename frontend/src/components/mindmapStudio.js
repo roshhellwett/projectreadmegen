@@ -322,7 +322,10 @@ function applyTransform() {
 }
 
 export function fitGraphToScreen() {
-  if (!activeNodePositions || Object.keys(activeNodePositions).length === 0) return;
+  if (!activeNodePositions || Object.keys(activeNodePositions).length === 0) {
+    scale = 1.0; panX = 0; panY = 0; applyTransform();
+    return;
+  }
   const positions = Object.values(activeNodePositions);
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   positions.forEach(pos => {

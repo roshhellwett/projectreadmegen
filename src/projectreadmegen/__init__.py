@@ -7,7 +7,7 @@ Usage:
     projectreadmegen generate <path> --template standard
 """
 
-__version__ = "5.1.13"
+__version__ = "6.0.0"
 
 try:
     from projectreadmegen import usagetracker

@@ -52,15 +52,6 @@ export function initDashboard() {
     }
   });
 
-  document.querySelectorAll('.studio-feature-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetTabId = btn.getAttribute('data-target-tab');
-      if (targetTabId) {
-        const navBtn = document.querySelector(`.nav-btn[data-tab="${targetTabId}"]`);
-        if (navBtn) navBtn.click();
-      }
-    });
-  });
 }
 
 export async function checkAPIStatus() {
@@ -81,6 +72,8 @@ export async function checkAPIStatus() {
 
       if (keyBanner) {
         const masked = data.api_key_masked ? `<code style="background:rgba(0,0,0,0.06);padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono';font-size:12px;">${data.api_key_masked}</code>` : '';
+        keyBanner.style.animation = 'none';
+        keyBanner.offsetHeight;
         keyBanner.innerHTML = `
           <div class="status-banner banner-connected">
             <div class="banner-text">
@@ -89,6 +82,7 @@ export async function checkAPIStatus() {
             </div>
           </div>
         `;
+        keyBanner.style.animation = 'fadeSlideIn 0.3s ease-out';
       }
     } else {
       statusPill?.classList.remove('connected');
@@ -96,6 +90,8 @@ export async function checkAPIStatus() {
       if (statusText) statusText.textContent = 'Groq API: Missing Key';
 
       if (keyBanner) {
+        keyBanner.style.animation = 'none';
+        keyBanner.offsetHeight;
         keyBanner.innerHTML = `
           <div class="status-banner banner-required">
             <div class="banner-text">
@@ -104,6 +100,7 @@ export async function checkAPIStatus() {
             </div>
           </div>
         `;
+        keyBanner.style.animation = 'fadeSlideIn 0.3s ease-out';
       }
     }
   } catch (err) {

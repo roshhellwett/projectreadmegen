@@ -137,8 +137,10 @@ function updateLiveStatsCard(userData, languages, username) {
     .map(([lang, pct]) => `<span class="badge badge-mono">${lang}: ${pct}%</span>`)
     .join(' ');
 
+  statsContent.style.animation = 'none';
+  statsContent.offsetHeight;
   statsContent.innerHTML = `
-    <div style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; flex-direction: column; gap: 14px; animation: fadeSlideIn 0.3s ease-out;">
       <div style="display: flex; align-items: center; gap: 14px;">
         ${userData.avatar_url ? `<img src="${userData.avatar_url}" alt="${username}" style="width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--border-color);" />` : ''}
         <div>

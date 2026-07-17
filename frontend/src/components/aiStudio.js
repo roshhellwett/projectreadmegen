@@ -31,6 +31,7 @@ export function initAIStudio() {
     btnGenerateAI.disabled = true;
     btnGenerateAI.innerHTML = `<span class="spinner-ring" style="width:16px;height:16px;border-width:2px;"></span><span>Architecting AI README...</span>`;
     thinkingCard?.classList.remove('hidden');
+    thinkingCard?.style.setProperty('animation', 'fadeSlideIn 0.2s ease-out');
 
     try {
       const response = await fetch('/api/generate-ai', {
@@ -65,6 +66,7 @@ export function initAIStudio() {
       btnGenerateAI.disabled = false;
       btnGenerateAI.innerHTML = `<span>Architect AI README</span>`;
       thinkingCard?.classList.add('hidden');
+      thinkingCard?.style.removeProperty('animation');
     }
   });
 

@@ -5,9 +5,10 @@ import { initProfileStudio } from './components/profileStudio.js';
 import { initMindMapStudio } from './components/mindmapStudio.js';
 import { initGitTrack } from './components/gitTrack.js';
 import { initDashboard, checkAPIStatus } from './components/dashboard.js';
+import { initSkillsStudio } from './components/skillsStudio.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Project README Gen Studio 5.1.13 initialized');
+  console.log('Project README Gen Studio 6.0.0 initialized');
 
   // Sidebar hamburger toggle
   const hamburgerBtn = document.getElementById('hamburger-toggle');
@@ -29,13 +30,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   hamburgerBtn?.addEventListener('click', (e) => { e.stopPropagation(); toggleSidebar(); });
   overlay?.addEventListener('click', closeSidebar);
 
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSidebar();
+  });
+
   // Navigation Tab Switching
   const navBtns = document.querySelectorAll('.nav-btn');
   const tabPanes = document.querySelectorAll('.tab-pane');
 
+  let currentTabId = 'tab-scanner';
+
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const targetTabId = btn.getAttribute('data-tab');
+      if (targetTabId === currentTabId) { closeSidebar(); return; }
 
       navBtns.forEach(b => b.classList.remove('active'));
       tabPanes.forEach(p => p.classList.remove('active'));
@@ -44,7 +52,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const targetPane = document.getElementById(targetTabId);
       if (targetPane) {
         targetPane.classList.add('active');
+        targetPane.style.animation = 'none';
+        requestAnimationFrame(() => {
+          targetPane.style.animation = '';
+        });
       }
+      currentTabId = targetTabId;
 
       if (targetTabId === 'tab-mindmap') {
         const mPath = document.getElementById('mindmap-path');
@@ -86,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initMindMapStudio();
   initGitTrack();
   initDashboard();
+  initSkillsStudio();
 
   // Initial API check
   await checkAPIStatus();
@@ -99,13 +113,19 @@ export function showToast(message, type = 'info', duration = 4000) {
   const prefix = type === 'success' ? 'Success:' : type === 'error' ? 'Error:' : 'Info:';
   toast.className = `toast ${type}`;
   toast.innerHTML = `<strong>${prefix}</strong><span>${message}</span>`;
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'polite');
 
   container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+  });
 
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateX(100%)';
-    toast.style.transition = 'all 0.3s ease';
+    toast.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }

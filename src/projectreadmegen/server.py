@@ -26,6 +26,7 @@ from projectreadmegen.github_profile import (
 )
 from projectreadmegen import usagetracker, __version__
 from projectreadmegen.exceptions import APIError as CustomAPIError
+from projectreadmegen.skills_manager import discover_all_skills, search_skills, install_skills, ensure_agent_md
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,7 @@ async def get_status():
     unified = usagetracker.get_unified_status_dict()
     return {
         "version": __version__,
+        "cwd": str(_WORKSPACE_ROOT),
         **unified,
     }
 
@@ -587,6 +589,51 @@ async def api_git_diff(file: str, hash: str = "", dir: str = "."):
         logger.error(f"Git diff error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# =========================================================================
+# SKILLS ENDPOINTS
+# =========================================================================
+
+class SkillsInstallRequest(BaseModel):
+    project_path: str = Field(default=".", description="Target project directory")
+    skills: List[str] = Field(..., description="List of skill IDs to install")
+
+@app.get("/api/skills/list")
+async def api_skills_list(q: str = ""):
+    """List all available skills, optionally filtered by search query."""
+    all_skills = discover_all_skills()
+    if q:
+        filtered = search_skills(q, all_skills)
+    else:
+        filtered = all_skills
+
+    grouped = {}
+    for s in filtered:
+        cat = s["category"]
+        grouped.setdefault(cat, []).append(s)
+
+    sorted_grouped = dict(sorted(grouped.items()))
+    return {"status": "success", "skills": filtered, "grouped": sorted_grouped, "total": len(filtered)}
+
+@app.post("/api/skills/install")
+async def api_skills_install(req: SkillsInstallRequest):
+    """Install selected skills into target project directory and update agent.md."""
+    project_path = req.project_path.strip() or "."
+    resolved = Path(project_path).resolve()
+
+    if not resolved.exists():
+        raise HTTPException(status_code=404, detail=f"Project directory not found: {resolved}")
+    if not resolved.is_dir():
+        raise HTTPException(status_code=400, detail=f"Path is not a directory: {resolved}")
+
+    result = install_skills(str(resolved), req.skills)
+    try:
+        agent_md_path = ensure_agent_md(str(resolved), result["installed"])
+        result["agent_md"] = agent_md_path
+    except Exception as e:
+        result["agent_md_error"] = str(e)
+
+    return {"status": "success", **result}
 
 # =========================================================================
 # STATIC FILES SETUP: Serve compiled frontend

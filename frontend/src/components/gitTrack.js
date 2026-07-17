@@ -565,7 +565,7 @@ function renderInspector(commit) {
       const loadEl = document.createElement('div');
       loadEl.className = 'git-diff-view open';
       loadEl.setAttribute('data-file', file);
-      loadEl.innerHTML = `<div class="git-diff-header"><span>Diff: ${file}</span><span class="diff-header-hash">Loading...</span></div><div style="color: #a1a1aa; font-family: var(--font-mono); font-size: 0.75rem;">Loading diff...</div>`;
+      loadEl.innerHTML = `<div class="git-diff-header"><span>Diff: ${file}</span><span class="diff-header-hash">Loading...</span></div><div style="display:flex;align-items:center;gap:10px;padding:8px 0;color:#a1a1aa;font-family:var(--font-mono);font-size:0.75rem;"><span class="spinner-ring" style="width:14px;height:14px;border-width:2px;"></span> Loading diff...</div>`;
       diffContainer.appendChild(loadEl);
 
       try {

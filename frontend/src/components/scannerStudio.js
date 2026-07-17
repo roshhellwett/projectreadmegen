@@ -45,13 +45,13 @@ export function initScannerStudio() {
       currentConfig = { ...data.config, template: currentConfig.template };
 
       if (data.resolved_path) {
-        if (inputPath) inputPath.value = data.resolved_path;
+        if (inputPath) { inputPath.value = data.resolved_path; inputPath.title = data.resolved_path; }
         const aiPath = document.getElementById('ai-path');
-        if (aiPath) aiPath.value = data.resolved_path;
+        if (aiPath) { aiPath.value = data.resolved_path; aiPath.title = data.resolved_path; }
         const gPath = document.getElementById('git-path');
-        if (gPath) gPath.value = data.resolved_path;
+        if (gPath) { gPath.value = data.resolved_path; gPath.title = data.resolved_path; }
         const mPath = document.getElementById('mindmap-path');
-        if (mPath) mPath.value = data.resolved_path;
+        if (mPath) { mPath.value = data.resolved_path; mPath.title = data.resolved_path; }
       }
       if (data.scan_result && data.scan_result.graph) {
         setMindMapGraphFromScan(data.scan_result.graph, data.resolved_path);
