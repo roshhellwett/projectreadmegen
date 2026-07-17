@@ -1,8 +1,10 @@
-# src/badges.py
+# src/projectreadmegen/badges.py
+#
+# Markdown badge generators for README files.
 
 
 def lang_badge(language: str) -> str:
-    """Return a language badge."""
+    """Return a shields.io language badge."""
     colors = {
         "Python":     "3776AB",
         "JavaScript": "F7DF1E",
@@ -22,22 +24,11 @@ def lang_badge(language: str) -> str:
 
 
 def license_badge(license_id: str) -> str:
-    """Return a license badge."""
+    """Return a shields.io license badge."""
     if license_id in ["None", "Unknown", ""]:
         return ""
     label = license_id.replace("-", "--").replace(" ", "%20")
     return f"![License](https://img.shields.io/badge/License-{label}-blue)"
-
-
-def platform_badge(platform: str) -> str:
-    """Return a platform badge (Linux, Windows, Cross-Platform)."""
-    colors = {
-        "Linux":         "FCC624",
-        "Windows":       "0078D6",
-        "Cross-Platform":"brightgreen",
-    }
-    color = colors.get(platform, "lightgrey")
-    return f"![Platform](https://img.shields.io/badge/Platform-{platform}-{color})"
 
 
 def build_badge_line(detection: dict) -> str:
@@ -63,10 +54,3 @@ def build_badge_line(detection: dict) -> str:
             badges.append(b)
     
     return "  ".join(badges)
-
-
-if __name__ == "__main__":
-    print(lang_badge("Python"))
-    print(lang_badge("C++"))
-    print(license_badge("MIT"))
-    print(build_badge_line({"primary_lang": "TypeScript", "license": "MIT"}))

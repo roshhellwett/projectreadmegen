@@ -6,6 +6,7 @@ from pathlib import Path
 import requests
 
 from projectreadmegen import usagetracker
+from projectreadmegen.exceptions import GitHubAPIError, GitHubValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -33,18 +34,6 @@ information from your GitHub profile URL instead.
 
 ================================================================
 """
-
-
-class GitHubAPIError(Exception):
-    """Custom exception for GitHub API errors."""
-
-    pass
-
-
-class GitHubValidationError(Exception):
-    """Custom exception for validation errors."""
-
-    pass
 
 
 def validate_github_username(username: str) -> Tuple[bool, str]:
@@ -548,7 +537,7 @@ def generate_readme_content(
     languages: Optional[Dict[str, int]] = None,
 ) -> str:
     """
-    Generate GitHub profile README using Grok AI.
+    Generate GitHub profile README using Groq AI.
 
     Args:
         username: GitHub username
@@ -561,13 +550,14 @@ def generate_readme_content(
     Returns:
         Generated README content
     """
-    from projectreadmegen.grok import GrokClient
+    from projectreadmegen.ai_provider import GroqClient
+    from projectreadmegen.constants import DEFAULT_AI_MODEL
 
     api_key = usagetracker.get_api_key()
     if not api_key:
         raise GitHubValidationError("Groq API key not configured")
 
-    client = GrokClient(api_key=api_key)
+    client = GroqClient(api_key=api_key)
 
     context = build_profile_context(
         username=username,
@@ -584,7 +574,7 @@ def generate_readme_content(
         readme = client.generate_readme(
             project_context=context,
             system_prompt=system_prompt,
-            model="llama-3.3-70b-versatile",
+            model=DEFAULT_AI_MODEL,
             max_tokens=4000,
         )
 
@@ -604,7 +594,7 @@ def save_github_readme(
     content: str, folder_path: str, username: str
 ) -> Tuple[bool, str]:
     """
-    Save generated README to file.
+    Save generated README to file using atomic write (temp file + move).
 
     Args:
         content: README content
@@ -614,17 +604,39 @@ def save_github_readme(
     Returns:
         Tuple of (success, file_path or error_message)
     """
+    import tempfile
+    import shutil
+
     try:
         readme_path = Path(folder_path) / "README.md"
+        tmp_path = None
 
-        with open(readme_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=folder_path,
+            delete=False,
+            suffix=".tmp",
+        ) as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
 
+        shutil.move(tmp_path, str(readme_path))
         return True, str(readme_path)
 
     except PermissionError:
+        if tmp_path:
+            try:
+                Path(tmp_path).unlink()
+            except OSError:
+                pass
         return False, "Permission denied. Cannot write to the folder."
     except Exception as e:
+        if tmp_path:
+            try:
+                Path(tmp_path).unlink()
+            except OSError:
+                pass
         return False, f"Error saving README: {str(e)}"
 
 

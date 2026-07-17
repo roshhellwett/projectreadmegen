@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "projectreadmegen"
-version         = "3.0.0"
+version         = "5.1.13"
 description     = "Auto-generate professional README files from folder structure with AI power"
 readme          = "readme.md"
 requires-python = ">=3.10"
@@ -42,6 +42,8 @@ dependencies = [
     "jinja2>=3.1",
     "openai>=1.0",
     "requests>=2.28",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
 ]
 
 [project.optional-dependencies]
@@ -62,4 +64,12 @@ where = ["src"]
 include = ["projectreadmegen*"]
 
 [tool.setuptools.package-data]
-projectreadmegen = ["templates/*.j2"]
+projectreadmegen = ["templates/*.j2", "web_dist/*", "web_dist/assets/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Component-level unit tests",
+    "smoke: Rapid smoke sanity tests for core imports, CLI commands, and API health",
+    "e2e: Deep end-to-end full lifecycle tests across CLI workflows and Web endpoints",
+]

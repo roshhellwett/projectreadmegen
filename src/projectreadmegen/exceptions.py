@@ -1,5 +1,8 @@
 """
 Production-grade exception classes for better error handling and user messaging.
+
+All application exceptions inherit from ProjectReadmeGenException so that
+CLI and API error handlers can catch them uniformly.
 """
 
 
@@ -25,10 +28,19 @@ class InvalidPathError(ProjectReadmeGenException):
     pass
 
 
-class PermissionError(ProjectReadmeGenException):
-    """Raised when the user lacks permission to access a path or file."""
+class AccessDeniedError(ProjectReadmeGenException):
+    """Raised when the user lacks permission to access a path or file.
+
+    NOTE: Previously named ``PermissionError``, renamed to avoid shadowing
+    the Python builtin ``PermissionError``.
+    """
 
     pass
+
+
+# Keep the old name available as an alias for backwards compatibility,
+# but new code should use AccessDeniedError.
+PermissionError = AccessDeniedError  # type: ignore[assignment]
 
 
 class InvalidConfigError(ProjectReadmeGenException):
@@ -38,7 +50,7 @@ class InvalidConfigError(ProjectReadmeGenException):
 
 
 class APIError(ProjectReadmeGenException):
-    """Raised when external API call fails."""
+    """Raised when external API call fails (Groq, etc.)."""
 
     pass
 
@@ -57,5 +69,28 @@ class TemplateNotFoundError(ProjectReadmeGenException):
 
 class ConfigurationError(ProjectReadmeGenException):
     """Raised when configuration loading or validation fails."""
+
+    pass
+
+
+# ---------------------------------------------------------------------------
+# GitHub-specific exceptions (integrated into the hierarchy)
+# ---------------------------------------------------------------------------
+
+
+class GitHubAPIError(APIError):
+    """Raised when a GitHub REST API call fails.
+
+    Inherits from APIError so that generic API error handlers catch it too.
+    """
+
+    pass
+
+
+class GitHubValidationError(InvalidConfigError):
+    """Raised when GitHub-related input validation fails (username, URL, etc.).
+
+    Inherits from InvalidConfigError for consistency with other validation errors.
+    """
 
     pass

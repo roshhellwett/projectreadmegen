@@ -105,6 +105,12 @@ def save_usage_data(data):
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
             json.dump(data, f)
+        # Restrict file permissions to owner-only (0600) for credential safety.
+        # On Windows this is a no-op; NTFS ACLs are managed separately.
+        try:
+            path.chmod(0o600)
+        except OSError:
+            pass
     except Exception as e:
         logger.warning(f"Could not save usage data: {e}")
 
@@ -195,10 +201,7 @@ To use AI-powered features, you need to set up your own Groq API key.
     key = input("\nPaste your Groq API key here: ").strip()
 
     if key and key.startswith("gsk_"):
-        os.environ["GROQ_API_KEY"] = key
-        data = load_usage_data()
-        data["user_key_set"] = True
-        save_usage_data(data)
+        save_api_key(key)
         console.print("\n[green]API key saved successfully![/green]")
         console.print("[dim]You can now use AI-powered features unlimited times.[/dim]")
         input("\nPress Enter to continue...")
@@ -248,38 +251,72 @@ To use AI-powered features, you need your own Groq API key.
     key = input("\nPaste your Groq API key (or press Enter to skip): ").strip()
 
     if key and key.startswith("gsk_"):
-        os.environ["GROQ_API_KEY"] = key
-        data = load_usage_data()
-        data["user_key_set"] = True
-        save_usage_data(data)
+        save_api_key(key)
         console.print("\n[green]API key configured![/green]")
     else:
         console.print("\n[dim]Skipped. You can add your key later from the menu.[/dim]")
 
 
+def save_api_key(api_key: str):
+    """Save Groq API key directly to usage data file and sync to os.environ."""
+    key = api_key.strip()
+    os.environ["GROQ_API_KEY"] = key
+    data = load_usage_data()
+    data["groq_api_key"] = key
+    data["user_key_set"] = True
+    save_usage_data(data)
+    logger.info("Groq API key saved successfully")
+
+
+def clear_api_key():
+    """Remove stored Groq API key."""
+    if "GROQ_API_KEY" in os.environ:
+        del os.environ["GROQ_API_KEY"]
+    if "groq_api_key" in os.environ:
+        del os.environ["groq_api_key"]
+    data = load_usage_data()
+    if "groq_api_key" in data:
+        del data["groq_api_key"]
+    data["user_key_set"] = False
+    save_usage_data(data)
+
+
 def get_api_key():
-    """Get Groq API key from environment or return None."""
+    """Get Groq API key from environment or storage, auto-syncing to os.environ."""
     user_key = os.environ.get("GROQ_API_KEY") or os.environ.get("groq_api_key")
     if user_key:
         return user_key
+    data = load_usage_data()
+    stored_key = data.get("groq_api_key")
+    if stored_key and stored_key.startswith("gsk_"):
+        os.environ["GROQ_API_KEY"] = stored_key
+        return stored_key
     if DEFAULT_API_KEY:
         return DEFAULT_API_KEY
     return None
 
 
 def save_github_token(token: str):
-    """Save GitHub token to usage data file."""
+    """Save GitHub token to usage data file and sync to os.environ."""
+    clean_token = token.strip()
+    os.environ["GITHUB_TOKEN"] = clean_token
     data = load_usage_data()
-    data["github_token"] = token
+    data["github_token"] = clean_token
     data["github_token_set"] = True
     save_usage_data(data)
     logger.info("GitHub token saved successfully")
 
 
 def get_github_token():
-    """Get stored GitHub token from usage data file."""
+    """Get stored GitHub token from usage data file and sync to os.environ."""
+    env_token = os.environ.get("GITHUB_TOKEN")
+    if env_token:
+        return env_token
     data = load_usage_data()
-    return data.get("github_token", "")
+    stored_token = data.get("github_token", "")
+    if stored_token:
+        os.environ["GITHUB_TOKEN"] = stored_token
+    return stored_token
 
 
 def has_github_token():
@@ -289,7 +326,9 @@ def has_github_token():
 
 
 def clear_github_token():
-    """Remove stored GitHub token."""
+    """Remove stored GitHub token and clear from os.environ."""
+    if "GITHUB_TOKEN" in os.environ:
+        del os.environ["GITHUB_TOKEN"]
     data = load_usage_data()
     if "github_token" in data:
         del data["github_token"]
@@ -353,6 +392,37 @@ def get_remaining_credits():
         return "[dim]Using your own API key | Powered by Zenith Open Source Projects | Developer - roshhellwett[/dim]"
 
     return "[red]API Key Required[/red] | Powered by Zenith Open Source Projects"
+
+
+def get_unified_status_dict():
+    """Return unified status dictionary for both CLI status command and Web /api/status."""
+    api_key = get_api_key()
+    has_key = bool(api_key)
+    github_token = get_github_token()
+    has_github = bool(github_token)
+    usage_data = load_usage_data()
+    storage_path = str(get_usage_file_path())
+
+    masked_key = (
+        f"{api_key[:8]}...{api_key[-4:]}"
+        if (has_key and len(api_key) > 12)
+        else ("Configured" if has_key else None)
+    )
+    masked_token = (
+        f"{github_token[:8]}...{github_token[-4:]}"
+        if (has_github and len(github_token) > 12)
+        else ("Configured" if has_github else None)
+    )
+
+    return {
+        "api_key_configured": has_key,
+        "api_key_masked": masked_key,
+        "github_token_configured": has_github,
+        "github_token_masked": masked_token,
+        "storage_path": storage_path,
+        "usage": usage_data,
+        "credits_message": get_remaining_credits(),
+    }
 
 
 def get_project_last_template(project_path):

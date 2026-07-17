@@ -1,4 +1,4 @@
-# src/detector.py
+# src/projectreadmegen/detector.py
 
 import logging
 from pathlib import Path
@@ -41,7 +41,7 @@ def detect_stack(scan_result: dict) -> dict:
     proj_type = _detect_project_type(files, dirs, languages, exts, name)
     desc_hint = _build_description_hint(name, primary, proj_type)
     install_cmd = _detect_install_command(files, primary)
-    run_cmd = _detect_run_command(files, dirs, primary, proj_type)
+    run_cmd = _detect_run_command(files, dirs, primary, proj_type, project_name=name)
 
     logger.info(f"Detected: {primary} ({proj_type})")
 
@@ -242,9 +242,10 @@ def _detect_install_command(files: list, primary_lang: str) -> str:
 
 
 def _detect_run_command(
-    files: list, dirs: list, primary_lang: str, proj_type: str
+    files: list, dirs: list, primary_lang: str, proj_type: str, project_name: str = ""
 ) -> str:
     """Return the most likely run command."""
+    name = project_name or "projectname"
     if proj_type == "cli-tool" and "main.py" in files:
         return "python main.py"
     if proj_type == "cli-tool" and "cli.py" in files:
@@ -259,11 +260,11 @@ def _detect_run_command(
             return "npm run dev"
         return "# See usage section below"
     if "pyproject.toml" in files:
-        return "python -m projectname"
+        return f"python -m {name}"
     if "Cargo.toml" in files:
         return "cargo run --release"
     if "CMakeLists.txt" in files:
-        return "./build/projectname"
+        return f"./build/{name}"
     if "Makefile" in files:
         return "make run"
     if "go.mod" in files:

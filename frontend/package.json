@@ -1,0 +1,19 @@
+{
+  "name": "projectreadmegen-web-studio",
+  "private": true,
+  "version": "5.1.13",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "marked": "^15.0.0",
+    "highlight.js": "^11.10.0",
+    "lucide": "^0.468.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

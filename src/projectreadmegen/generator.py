@@ -1,4 +1,4 @@
-# src/generator.py
+# src/projectreadmegen/generator.py
 
 import logging
 from pathlib import Path

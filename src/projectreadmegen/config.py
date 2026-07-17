@@ -1,187 +1,85 @@
-# src/config.py
+# src/projectreadmegen/config.py
+#
+# Configuration loading and validation.
+#
+# For backwards compatibility, all constants from constants.py are re-exported
+# here so existing ``from projectreadmegen.config import SKIP_DIRS`` continues
+# to work.  New code should import from constants.py directly.
 
+import json
 import logging
+from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+from projectreadmegen.constants import *  # noqa: F401, F403  — re-export
+from projectreadmegen.constants import DEFAULT_CONFIG, VALID_CONFIG_KEYS
 
 logger = logging.getLogger(__name__)
 
-LANG_PATTERNS = {
-    "Python": [
-        "requirements.txt",
-        "setup.py",
-        "pyproject.toml",
-        "*.py",
-        "Pipfile",
-        "poetry.lock",
-        "venv",
-    ],
-    "JavaScript": [
-        "package.json",
-        "package-lock.json",
-        "*.js",
-        ".eslintrc",
-        ".babelrc",
-        "yarn.lock",
-    ],
-    "TypeScript": ["tsconfig.json", "*.ts", "*.tsx", "pnpm-lock.yaml"],
-    "C++": ["CMakeLists.txt", "*.cpp", "*.hpp", "Makefile", "*.cc", "*.hxx"],
-    "C": ["*.c", "*.h", "Makefile", "CMakeLists.txt"],
-    "Rust": ["Cargo.toml", "Cargo.lock", "*.rs"],
-    "Go": ["go.mod", "go.sum", "*.go"],
-    "Java": ["pom.xml", "build.gradle", "build.gradle.kts", "*.java", "gradlew"],
-    "C#": ["*.csproj", "*.sln", "*.cs", "NuGet.config"],
-    "PHP": ["composer.json", "composer.lock", "*.php", "phpunit.xml"],
-    "Ruby": ["Gemfile", "Gemfile.lock", "*.rb", "Rakefile"],
-    "Swift": ["Package.swift", "*.swift", "Podfile"],
-    "Kotlin": ["build.gradle.kts", "*.kt", "settings.gradle.kts"],
-    "Scala": ["build.sbt", "*.scala"],
-    "HTML/CSS": ["*.html", "*.css", "*.scss", "*.sass", "tailwind.config.js"],
-    "Shell": ["*.sh", "*.bash", "Makefile"],
-    "PowerShell": ["*.ps1", "*.psm1"],
-    "Docker": ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"],
-    "Terraform": ["*.tf", "terraform.tfvars"],
-    "Vue": ["vite.config.js", "vue.config.js", "*.vue"],
-    "React": ["webpack.config.js", "next.config.js"],
-    "Angular": ["angular.json", "ngsw-config.json"],
-}
 
-LICENSE_NAMES = {
-    "LICENSE": "Unknown",
-    "LICENSE.md": "Unknown",
-    "LICENSE.txt": "Unknown",
-    "LICENSE-MIT": "MIT",
-    "LICENSE-APACHE": "Apache-2.0",
-    "COPYING": "GPL-3.0",
-    "COPYING.md": "GPL-3.0",
-}
+def load_config(root_path: str) -> dict:
+    """
+    Load readmegen.config.json from the project root if it exists,
+    otherwise return DEFAULT_CONFIG.
 
-SKIP_DIRS = {
-    ".git",
-    ".svn",
-    ".hg",
-    "__pycache__",
-    "node_modules",
-    ".venv",
-    "venv",
-    "env",
-    ".env",
-    ".tox",
-    "dist",
-    "build",
-    ".next",
-    ".nuxt",
-    ".svelte",
-    "target",
-    "bin",
-    "obj",
-    "out",
-    ".idea",
-    ".vscode",
-    ".vs",
-    ".cache",
-    ".parcel-cache",
-    ".turbo",
-    "coverage",
-    ".nyc_output",
-    ".pytest_cache",
-    "vendor",
-    "third_party",
-    "deps",
-    "*.egg-info",
-    "examples",
-    "Example",
-    "sample",
-    "Sample",
-}
+    Parameters:
+        root_path (str): Path to the project root.
 
-SKIP_FILES = {
-    ".DS_Store",
-    "Thumbs.db",
-    "desktop.ini",
-    "途",
-    "*.pyc",
-    "*.pyo",
-    "*.class",
-    "*.o",
-    "*.so",
-    "*.dll",
-    "*.exe",
-    "*.dylib",
-    "*.log",
-    "*.tmp",
-    "*.temp",
-    "package-lock.json",  # Skip if using yarn/pnpm
-}
+    Returns:
+        dict: Merged configuration (user config overrides defaults).
 
-VALID_TEMPLATES = ["minimal", "standard", "full", "academic"]
+    Raises:
+        ConfigurationError: If the config file exists but is malformed.
+    """
+    from projectreadmegen.exceptions import ConfigurationError
 
-VALID_CONFIG_KEYS = {
-    "template": str,
-    "output_file": str,
-    "include_tree": bool,
-    "max_tree_depth": int,
-    "include_badges": bool,
-    "gemini_enabled": bool,
-    "ai_enabled": bool,
-    "ai_provider": str,
-    "groq_api_key": str,
-    "author": str,
-    "github_username": str,
-}
+    config_path = Path(root_path) / "readmegen.config.json"
+    config = DEFAULT_CONFIG.copy()
 
-DEFAULT_CONFIG = {
-    "template": "standard",
-    "output_file": "README.md",
-    "include_tree": True,
-    "max_tree_depth": 3,
-    "include_badges": True,
-    "gemini_enabled": False,
-    "ai_enabled": False,
-    "ai_provider": "groq",
-    "groq_api_key": "",
-    "author": "",
-    "github_username": "",
-}
+    if config_path.exists():
+        logger.debug(f"Loading config from {config_path}")
+        try:
+            # Verify readable
+            if not config_path.is_file():
+                logger.warning(f"Config path is not a file: {config_path}")
+                return config
 
-USAGE_FILE = "projectreadmegen_usage.json"
+            with open(config_path, "r", encoding="utf-8") as f:
+                user_config = json.load(f)
 
-PRESETS = {
-    "django": {
-        "template": "standard",
-        "include_badges": True,
-        "include_tree": True,
-    },
-    "react": {
-        "template": "full",
-        "include_badges": True,
-        "include_tree": True,
-    },
-    "fastapi": {
-        "template": "standard",
-        "include_badges": True,
-        "include_tree": True,
-    },
-    "nodejs": {
-        "template": "full",
-        "include_badges": True,
-        "include_tree": True,
-    },
-    "nextjs": {
-        "template": "full",
-        "include_badges": True,
-        "include_tree": True,
-    },
-    "rust-cli": {
-        "template": "standard",
-        "include_badges": True,
-        "include_tree": True,
-    },
-    "go-cli": {
-        "template": "standard",
-        "include_badges": True,
-        "include_tree": True,
-    },
-}
+            # Validate config is dict
+            if not isinstance(user_config, dict):
+                raise ConfigurationError(
+                    f"Invalid config format: expected dict, got {type(user_config).__name__}",
+                    "Configuration file must be a valid JSON object.",
+                )
 
-TEMPLATES_DIR = "templates"
+            # Validate and merge — only known keys are accepted
+            for key, value in user_config.items():
+                if key in config:
+                    config[key] = value
+                else:
+                    logger.warning(f"Unknown config key in readmegen.config.json: {key}")
+
+            logger.debug(f"Loaded user config: {config}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in {config_path}: {e}")
+            raise ConfigurationError(
+                f"Invalid JSON in {config_path}: {e}",
+                "The readmegen.config.json file contains invalid JSON. Please fix the syntax.",
+            )
+        except (IOError, OSError) as e:
+            logger.error(f"Cannot read config file {config_path}: {e}")
+            raise ConfigurationError(
+                f"Cannot read config file {config_path}: {e}",
+                f"Unable to read configuration file: {e}",
+            )
+        except ConfigurationError:
+            raise
+        except Exception as e:
+            logger.error(f"Error loading config from {config_path}: {e}")
+            raise ConfigurationError(
+                f"Error loading config from {config_path}: {e}",
+                f"An error occurred while loading configuration: {e}",
+            )
+
+    return config

@@ -1,0 +1,2 @@
+recursive-include src/projectreadmegen/templates *.j2
+recursive-include src/projectreadmegen/web_dist *
