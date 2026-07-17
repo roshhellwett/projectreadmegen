@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "projectreadmegen"
-version         = "6.0.0"
+version         = "7.0.0"
 description     = "Auto-generate professional README files from folder structure with AI power"
 readme          = "readme.md"
 requires-python = ">=3.10"
@@ -62,9 +62,10 @@ projectreadmegen = "projectreadmegen.cli:app"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["projectreadmegen*"]
+exclude = ["frontend*", "node_modules*"]
 
 [tool.setuptools.package-data]
-projectreadmegen = ["templates/*.j2", "web_dist/*", "web_dist/assets/*"]
+projectreadmegen = ["templates/*.j2", "web_dist/*", "web_dist/assets/*", "skills/*", "skills/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

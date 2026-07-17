@@ -1,4 +1,4 @@
-"""Smoke Test Suite for Project README Gen 6.0.0.
+"""Smoke Test Suite for Project README Gen 7.0.0.
 
 Provides rapid sanity checks covering package integrity, critical imports,
 CLI responsiveness, and REST API/SPA static delivery health.
@@ -27,7 +27,7 @@ client = TestClient(server.app)
 
 def test_package_version_and_imports():
     """Verify package version consistency and clean module imports."""
-    assert __version__ == "6.0.0"
+    assert __version__ == "7.0.0"
     assert cli.app is not None
     assert server.app is not None
     assert hasattr(scanner, "scan_directory")
@@ -55,7 +55,7 @@ def test_cli_smoke_invocation():
     # Test version
     result = runner.invoke(cli.app, ["--version"])
     assert result.exit_code == 0
-    assert "6.0.0" in result.stdout
+    assert "7.0.0" in result.stdout
 
 
 def test_server_health_smoke():

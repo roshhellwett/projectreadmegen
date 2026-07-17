@@ -1,2 +1,4 @@
 recursive-include src/projectreadmegen/templates *.j2
 recursive-include src/projectreadmegen/web_dist *
+recursive-include src/projectreadmegen/skills *
+recursive-exclude src/projectreadmegen/skills/_sources *

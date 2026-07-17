@@ -129,7 +129,7 @@ def test_install_skills_skill_not_found(tmp_path):
 def test_install_skills_source_missing(skills_fs, tmp_path):
     with patch("projectreadmegen.skills_manager._SKILLS_ROOT", skills_fs):
         with patch("projectreadmegen.skills_manager.discover_all_skills") as mock_disc:
-            mock_disc.return_value = [{"id": "ghost", "name": "Ghost", "description": "", "category": "Testing"}]
+            mock_disc.return_value = [{"id": "ghost", "name": "Ghost", "description": "", "category": "Testing", "_path": str(skills_fs / "Testing" / "ghost")}]
             result = install_skills(str(tmp_path), ["ghost"])
             assert len(result["errors"]) == 1
 

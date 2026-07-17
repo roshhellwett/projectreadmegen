@@ -32,6 +32,42 @@ _SKILLS_ROOT = _resolve_skills_root()
 EXCLUDED_CATEGORIES = {"_sources", "Other"}
 
 
+def _read_skill_md(skill_dir: Path) -> dict:
+    """Parse SKILL.md and return metadata dict."""
+    result = {"description": "", "risk": "unknown", "source": "", "raw_category": ""}
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.exists():
+        return result
+    text = skill_md.read_text("utf-8", errors="replace")
+    desc_match = re.search(r'^description:\s*"?(.+?)"?\s*$', text, re.MULTILINE)
+    if desc_match:
+        result["description"] = desc_match.group(1).strip().strip('"')
+    risk_match = re.search(r'^risk:\s*(.+?)\s*$', text, re.MULTILINE)
+    if risk_match:
+        result["risk"] = risk_match.group(1).strip()
+    source_match = re.search(r'^source:\s*(.+?)\s*$', text, re.MULTILINE)
+    if source_match:
+        result["source"] = source_match.group(1).strip()
+    cat_match = re.search(r'^category:\s*"?(.+?)"?\s*$', text, re.MULTILINE)
+    if cat_match:
+        result["raw_category"] = cat_match.group(1).strip().strip('"')
+    return result
+
+
+def _build_skill_entry(skill_id: str, cat_name: str, skill_dir: Path) -> dict:
+    """Build a skill dict from a directory."""
+    meta = _read_skill_md(skill_dir)
+    return {
+        "id": skill_id,
+        "name": skill_id.replace("-", " ").title(),
+        "description": meta["description"],
+        "category": cat_name,
+        "risk": meta["risk"],
+        "source": meta["source"],
+        "_path": str(skill_dir),
+    }
+
+
 def discover_all_skills() -> List[Dict]:
     """Walk skills directory and return all skills grouped by category."""
     if not _SKILLS_ROOT.exists():
@@ -39,53 +75,42 @@ def discover_all_skills() -> List[Dict]:
         return []
 
     skills = []
+    seen_ids = set()
+
+    # Phase 1: top-level category dirs (curated hierarchy)
     for cat_dir in sorted(_SKILLS_ROOT.iterdir()):
         if not cat_dir.is_dir():
             continue
         cat_name = cat_dir.name
         if cat_name in EXCLUDED_CATEGORIES:
             continue
-
         for skill_dir in sorted(cat_dir.iterdir()):
             if not skill_dir.is_dir():
                 continue
             skill_id = skill_dir.name
-            skill_md = skill_dir / "SKILL.md"
+            if skill_id in seen_ids:
+                continue
+            seen_ids.add(skill_id)
+            skills.append(_build_skill_entry(skill_id, cat_name, skill_dir))
 
-            description = ""
-            risk = "unknown"
-            source = ""
-            if skill_md.exists():
-                desc_match = re.search(
-                    r'^description:\s*"?(.+?)"?\s*$',
-                    skill_md.read_text("utf-8", errors="replace"),
-                    re.MULTILINE,
-                )
-                if desc_match:
-                    description = desc_match.group(1).strip().strip('"')
-                risk_match = re.search(
-                    r'^risk:\s*(.+?)\s*$',
-                    skill_md.read_text("utf-8", errors="replace"),
-                    re.MULTILINE,
-                )
-                if risk_match:
-                    risk = risk_match.group(1).strip()
-                source_match = re.search(
-                    r'^source:\s*(.+?)\s*$',
-                    skill_md.read_text("utf-8", errors="replace"),
-                    re.MULTILINE,
-                )
-                if source_match:
-                    source = source_match.group(1).strip()
-
-            skills.append({
-                "id": skill_id,
-                "name": skill_id.replace("-", " ").title(),
-                "description": description,
-                "category": cat_name,
-                "risk": risk,
-                "source": source,
-            })
+    # Phase 2: flat repos inside _sources/ (each skill has category: field in SKILL.md)
+    sources_dir = _SKILLS_ROOT / "_sources"
+    if sources_dir.exists():
+        for repo_dir in sorted(sources_dir.iterdir()):
+            repo_skills = repo_dir / "skills"
+            if not repo_skills.is_dir():
+                continue
+            for skill_dir in sorted(repo_skills.iterdir()):
+                if not skill_dir.is_dir():
+                    continue
+                skill_id = skill_dir.name
+                if skill_id in seen_ids:
+                    continue
+                seen_ids.add(skill_id)
+                meta = _read_skill_md(skill_dir)
+                cat_name = meta["raw_category"] or "Uncategorized"
+                entry = _build_skill_entry(skill_id, cat_name, skill_dir)
+                skills.append(entry)
 
     return skills
 
@@ -140,8 +165,7 @@ def install_skills(project_path: str, skill_ids: List[str]) -> Dict:
             errors.append({"id": skill_id, "error": "Skill not found"})
             continue
 
-        cat = skill_info["category"]
-        src_dir = _SKILLS_ROOT / cat / skill_id
+        src_dir = Path(skill_info["_path"])
 
         if not src_dir.exists():
             errors.append({"id": skill_id, "error": "Source directory missing"})

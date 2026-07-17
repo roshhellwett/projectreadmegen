@@ -334,12 +334,12 @@ async def api_graph_chat(req: GraphChatRequest):
                     file_preview = f"\n\n[Binary or image file — cannot preview contents. Filename: {req.node_path}]"
                 else:
                     try:
-                        MAX_FILE_BYTES = 100_000  # ~100KB limit
+                        MAX_FILE_BYTES = 15_000
                         with open(p, "rb") as f:
                             raw = f.read(MAX_FILE_BYTES)
                         text = raw.decode("utf-8", errors="replace")
                         if len(raw) >= MAX_FILE_BYTES:
-                            text += "\n\n[File truncated at 100KB]"
+                            text += "\n\n[File truncated at ~4K tokens to stay within API rate limits]"
                         file_preview = f"\n\nFULL FILE ({req.node_path}):\n```\n" + text + "\n```"
                     except Exception:
                         file_preview = f"\n\n[Could not read file: {req.node_path}]"
@@ -392,7 +392,9 @@ async def api_graph_chat(req: GraphChatRequest):
 
         client = GrokClient(api_key=api_key)
         messages = [{"role": "system", "content": system_prompt}]
-        for turn in req.history:
+        MAX_HISTORY_TURNS = 5
+        recent_history = req.history[-MAX_HISTORY_TURNS * 2:] if len(req.history) > MAX_HISTORY_TURNS * 2 else req.history
+        for turn in recent_history:
             messages.append({"role": turn.get("role", "user"), "content": turn.get("content", "")})
         
         user_query = req.message if req.message != "AUDIT" else f"Review this file: what does it do, is it well structured, and what would you improve?"

@@ -1,4 +1,4 @@
-"""End-to-End Web Studio & REST API Lifecycle Tests for Project README Gen 6.0.0.
+"""End-to-End Web Studio & REST API Lifecycle Tests for Project README Gen 7.0.0.
 
 Tests full HTTP endpoints, multi-step scanning & template generation pipelines,
 GitHub Profile presets, and atomic key synchronization between Web and CLI state.

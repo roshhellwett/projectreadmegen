@@ -8,7 +8,7 @@ import { initDashboard, checkAPIStatus } from './components/dashboard.js';
 import { initSkillsStudio } from './components/skillsStudio.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Project README Gen Studio 6.0.0 initialized');
+  console.log('Project README Gen Studio 7.0.0 initialized');
 
   // Sidebar hamburger toggle
   const hamburgerBtn = document.getElementById('hamburger-toggle');
