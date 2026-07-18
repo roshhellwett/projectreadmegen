@@ -112,7 +112,7 @@ def _detect_license(files: list, root: str) -> str:
                 for lic_id, keywords in license_identifiers.items():
                     if any(kw.upper() in content for kw in keywords):
                         return lic_id
-            except IOError, OSError:
+            except (IOError, OSError):
                 continue
 
     if any(f.upper() in license_names_upper for f in files):
