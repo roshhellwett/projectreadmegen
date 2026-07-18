@@ -35,6 +35,8 @@ function getExtraHeadersFromEnv() {
   return null;
 }
 
+const fs = require('fs');
+
 /**
  * Launch browser with standard configuration
  * @param {string} browserType - 'chromium', 'firefox', or 'webkit'
@@ -47,6 +49,32 @@ async function launchBrowser(browserType = 'chromium', options = {}) {
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   };
   
+  // When launching chromium, prioritize existing system Chrome installation to avoid 404 binary download errors
+  if (browserType === 'chromium' && !options.executablePath && !options.channel) {
+    if (process.env.PW_CHANNEL) {
+      defaultOptions.channel = process.env.PW_CHANNEL;
+    } else if (process.env.PW_EXECUTABLE_PATH) {
+      defaultOptions.executablePath = process.env.PW_EXECUTABLE_PATH;
+    } else {
+      const commonChromePaths = [
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        process.env.LOCALAPPDATA ? `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe` : null,
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable',
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+      ].filter(Boolean);
+
+      const installedChromePath = commonChromePaths.find(p => fs.existsSync(p));
+      if (installedChromePath) {
+        console.log(`🌐 Automatically using existing Chrome installation at: ${installedChromePath}`);
+        defaultOptions.executablePath = installedChromePath;
+      } else {
+        defaultOptions.channel = 'chrome';
+      }
+    }
+  }
+
   const browsers = { chromium, firefox, webkit };
   const browser = browsers[browserType];
   

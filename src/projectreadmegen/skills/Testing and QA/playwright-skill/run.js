@@ -54,12 +54,16 @@ function installPlaywright() {
   console.log('📦 Playwright not found. Installing...');
   try {
     execSync('npm install', { stdio: 'inherit', cwd: __dirname });
-    execSync('npx playwright install chromium', { stdio: 'inherit', cwd: __dirname });
-    console.log('✅ Playwright installed successfully');
+    try {
+      execSync('npx playwright install chromium', { stdio: 'inherit', cwd: __dirname });
+    } catch (binError) {
+      console.warn('⚠️ Could not download Playwright Chromium binary (e.g. 404 error from CDN). Will fallback to using existing system Chrome installation.');
+    }
+    console.log('✅ Playwright setup completed');
     return true;
   } catch (e) {
-    console.error('❌ Failed to install Playwright:', e.message);
-    console.error('Please run manually: cd', __dirname, '&& npm run setup');
+    console.error('❌ Failed to install Playwright npm packages:', e.message);
+    console.error('Please run manually: cd', __dirname, '&& npm install');
     return false;
   }
 }
